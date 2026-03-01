@@ -98,6 +98,112 @@ function buildContextSnippet(items: IndexedTextItem[], startIndex: number, endIn
     .trim();
 }
 
+function buildTopLines(items: IndexedTextItem[]) {
+  if (items.length === 0) {
+    return [];
+  }
+
+  const maxY = items.reduce((currentMax, item) => Math.max(currentMax, item.y), Number.NEGATIVE_INFINITY);
+  const headerBandMinY = maxY - 46;
+  const sorted = items
+    .filter((item) => item.y >= headerBandMinY)
+    .sort((a, b) => b.y - a.y || a.x - b.x);
+  const lines: Array<{ y: number; items: IndexedTextItem[] }> = [];
+
+  for (const item of sorted) {
+    const line = lines.find((entry) => Math.abs(entry.y - item.y) <= 2.5);
+    if (line) {
+      line.items.push(item);
+      continue;
+    }
+    lines.push({ y: item.y, items: [item] });
+  }
+
+  return lines
+    .sort((a, b) => b.y - a.y)
+    .slice(0, 8)
+    .map((line) =>
+      line.items
+        .sort((a, b) => a.x - b.x)
+        .map((item) => item.text)
+        .join(" ")
+        .replace(/\s+/g, " ")
+        .trim(),
+    )
+    .filter(Boolean);
+}
+
+function cleanExtractedTitle(value: string) {
+  const cleaned = value
+    .replace(/\bCITY OF SURREY\b/gi, " ")
+    .replace(/\bENGINEERING DEPARTMENT\b/gi, " ")
+    .replace(/\bMMCD\s+SECTION\s+[0-9A-Za-z.\s-]+/gi, " ")
+    .replace(/\bMMCD\s+(?:SGC|SS|SMMCD|VMMCD)\b/gi, " ")
+    .replace(/\b(?:SS|SGC)\s*PAGE\s+[A-Za-z0-9.-]+\b/gi, " ")
+    .replace(/\bPAGE\s+[A-Za-z0-9.-]+\b/gi, " ")
+    .replace(/\b20\s*2\s*4\b/gi, " ")
+    .replace(/\b20\d{2}\b/g, " ")
+    .replace(/\s*-\s*/g, "-")
+    .replace(/^[\s\-|,;:]+|[\s\-|,;:]+$/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return cleaned.length > 0 ? cleaned : null;
+}
+
+function extractPrintedPageLabel(items: IndexedTextItem[]) {
+  const joined = items
+    .map((item) => item.text)
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!joined) {
+    return null;
+  }
+
+  const match = joined.match(/\b((?:[A-Z]{1,4}\s+)?PAGE\s+[A-Z0-9.-]+)\b/i);
+  return match ? match[1].toUpperCase() : null;
+}
+
+function extractSectionTitle(items: IndexedTextItem[]) {
+  const topLines = buildTopLines(items);
+
+  for (const line of topLines) {
+    if (!/TABLE OF CONTENTS/i.test(line)) {
+      continue;
+    }
+
+    const cleanedTocTitle = cleanExtractedTitle(line);
+    if (cleanedTocTitle) {
+      return cleanedTocTitle;
+    }
+  }
+
+  const candidates = topLines.filter((line) => {
+    const cleanedLine = cleanExtractedTitle(line);
+    if (!cleanedLine || cleanedLine.length < 10) {
+      return false;
+    }
+    if (/^(?:MMCD|SECTION|PAGE)\b/i.test(cleanedLine)) {
+      return false;
+    }
+    const alphaOnly = cleanedLine.replace(/[^A-Za-z]/g, "");
+    if (alphaOnly.length < 6) {
+      return false;
+    }
+    const uppercaseCount = alphaOnly.replace(/[^A-Z]/g, "").length;
+    return uppercaseCount / alphaOnly.length >= 0.55;
+  });
+
+  if (candidates.length === 0) {
+    return null;
+  }
+
+  const bestRawLine = candidates.sort((a, b) => b.length - a.length)[0];
+  return cleanExtractedTitle(bestRawLine);
+}
+
 function deriveHitLocation(
   pageItems: IndexedTextItem[],
   itemIndex: number,
@@ -154,6 +260,8 @@ export function PdfSearchApp() {
   const [searchHits, setSearchHits] = useState<SearchHit[]>([]);
   const [activeHitId, setActiveHitId] = useState<string | null>(null);
   const [searchMessage, setSearchMessage] = useState<string | null>(null);
+  const [printedPageLabels, setPrintedPageLabels] = useState<Map<number, string>>(new Map());
+  const [sectionTitlesByPage, setSectionTitlesByPage] = useState<Map<number, string>>(new Map());
 
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
   const [zoomPercent, setZoomPercent] = useState(100);
@@ -180,6 +288,10 @@ export function PdfSearchApp() {
   const renderScale = useMemo(
     () => BASE_RENDER_SCALE * (zoomPercent / 100),
     [zoomPercent],
+  );
+  const activeHitPrintedPageLabel = useMemo(
+    () => (activeHit ? printedPageLabels.get(activeHit.pageNumber) ?? null : null),
+    [activeHit, printedPageLabels],
   );
 
   useEffect(() => {
@@ -239,6 +351,8 @@ export function PdfSearchApp() {
         setSearchHits([]);
         setActiveHitId(null);
         setSearchMessage(null);
+        setPrintedPageLabels(new Map());
+        setSectionTitlesByPage(new Map());
 
         if (!loadingSources) {
           setSourceError("No PDF files were found in the public folder.");
@@ -254,6 +368,8 @@ export function PdfSearchApp() {
       setSearchHits([]);
       setActiveHitId(null);
       setSearchMessage(null);
+      setPrintedPageLabels(new Map());
+      setSectionTitlesByPage(new Map());
       setZoomPercent(100);
 
       if (activePdfRef.current) {
@@ -280,6 +396,8 @@ export function PdfSearchApp() {
 
         setIndexing(true);
         const nextIndex = new Map<number, IndexedTextItem[]>();
+        const nextPrintedPageLabels = new Map<number, string>();
+        const nextSectionTitlesByPage = new Map<number, string>();
 
         for (let pageNumber = 1; pageNumber <= loadedDoc.numPages; pageNumber += 1) {
           const page = await loadedDoc.getPage(pageNumber);
@@ -312,10 +430,20 @@ export function PdfSearchApp() {
           }
 
           nextIndex.set(pageNumber, items);
+          const printedPageLabel = extractPrintedPageLabel(items);
+          if (printedPageLabel) {
+            nextPrintedPageLabels.set(pageNumber, printedPageLabel);
+          }
+          const sectionTitle = extractSectionTitle(items);
+          if (sectionTitle) {
+            nextSectionTitlesByPage.set(pageNumber, sectionTitle);
+          }
         }
 
         if (!cancelled) {
           setPageIndex(nextIndex);
+          setPrintedPageLabels(nextPrintedPageLabels);
+          setSectionTitlesByPage(nextSectionTitlesByPage);
         }
       } catch {
         if (!cancelled) {
@@ -476,7 +604,14 @@ export function PdfSearchApp() {
           for (let i = 0; i <= flattenedTokens.length - queryTokens.length; i += 1) {
             let matches = true;
             for (let j = 0; j < queryTokens.length; j += 1) {
-              if (flattenedTokens[i + j].token !== queryTokens[j]) {
+              const queryToken = queryTokens[j];
+              const candidateToken = flattenedTokens[i + j].token;
+              const isLastQueryToken = j === queryTokens.length - 1;
+              const isMatch =
+                candidateToken === queryToken ||
+                (isLastQueryToken && queryToken.length >= 2 && candidateToken.startsWith(queryToken));
+
+              if (!isMatch) {
                 matches = false;
                 break;
               }
@@ -696,6 +831,10 @@ export function PdfSearchApp() {
               <ul>
                 {searchHits.map((hit) => {
                   const active = hit.id === activeHitId;
+                  const hitPrintedPageLabel =
+                    printedPageLabels.get(hit.pageNumber) ?? hit.location.clause;
+                  const hitSectionTitle =
+                    sectionTitlesByPage.get(hit.pageNumber) ?? hit.location.section;
                   return (
                     <li key={hit.id} className={active ? "active" : ""}>
                       <div className="resultTop">
@@ -704,7 +843,7 @@ export function PdfSearchApp() {
                       </div>
 
                       <p className="resultPath">
-                        {hit.location.section} - {hit.location.part} - {hit.location.clause}
+                        {hitSectionTitle} - {hitPrintedPageLabel}
                       </p>
 
                       <p className="resultSnippet">{renderMarkedSnippet(hit.snippet, query)}</p>
@@ -734,7 +873,7 @@ export function PdfSearchApp() {
               Prev
             </button>
             <span className="toolbarValue">
-              Page {pageCount === 0 ? 0 : currentPage} / {pageCount}
+              PDF {pageCount === 0 ? 0 : currentPage} / {pageCount}
             </span>
             <button type="button" onClick={nextPage} disabled={currentPage >= pageCount}>
               Next
@@ -791,7 +930,9 @@ export function PdfSearchApp() {
 
           {activeHit ? (
             <div className="activeMatchBar">
-              Active match: page {activeHit.pageNumber}, item {activeHit.itemIndex + 1}
+              Active match:{" "}
+              {activeHitPrintedPageLabel ?? `PDF page ${activeHit.pageNumber}`}
+              , item {activeHit.itemIndex + 1}
             </div>
           ) : null}
         </section>
