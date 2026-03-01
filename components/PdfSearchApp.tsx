@@ -63,10 +63,8 @@ export function PdfSearchApp() {
     [currentPage, searchHits],
   );
 
-  const renderScale = useMemo(
-    () => BASE_RENDER_SCALE * (zoomPercent / 100),
-    [zoomPercent],
-  );
+  const renderScale = BASE_RENDER_SCALE;
+  const zoomScale = zoomPercent / 100;
 
   const activeHitPrintedPageLabel = useMemo(
     () => (activeHit ? printedPageLabels.get(activeHit.pageNumber) ?? null : null),
@@ -455,6 +453,7 @@ export function PdfSearchApp() {
           viewportSize={viewportSize}
           currentPageHits={currentPageHits}
           renderScale={renderScale}
+          zoomScale={zoomScale}
           activeHitId={activeHitId}
           onJumpToHit={jumpToHit}
           activeHit={activeHit}

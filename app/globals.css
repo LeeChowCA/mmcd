@@ -382,11 +382,16 @@ body {
 
 .canvasWrap {
   position: relative;
-  width: max-content;
   margin: 0 auto;
 }
 
-.canvasWrap canvas {
+.canvasStage {
+  position: relative;
+  transform-origin: top left;
+  will-change: transform;
+}
+
+.canvasStage canvas {
   display: block;
   background: #ffffff;
 }

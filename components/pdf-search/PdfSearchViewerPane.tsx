@@ -23,6 +23,7 @@ type PdfSearchViewerPaneProps = {
   viewportSize: { width: number; height: number };
   currentPageHits: SearchHit[];
   renderScale: number;
+  zoomScale: number;
   activeHitId: string | null;
   onJumpToHit: (hit: SearchHit) => void;
   activeHit: SearchHit | null;
@@ -51,6 +52,7 @@ export function PdfSearchViewerPane({
   viewportSize,
   currentPageHits,
   renderScale,
+  zoomScale,
   activeHitId,
   onJumpToHit,
   activeHit,
@@ -101,30 +103,45 @@ export function PdfSearchViewerPane({
       </div>
 
       <div className="viewerCanvasFrame" ref={canvasContainerRef}>
-        <div className="canvasWrap">
-          <canvas ref={canvasRef} />
+        <div
+          className="canvasWrap"
+          style={{
+            width: viewportSize.width > 0 ? viewportSize.width * zoomScale : undefined,
+            height: viewportSize.height > 0 ? viewportSize.height * zoomScale : undefined,
+          }}
+        >
+          <div
+            className="canvasStage"
+            style={{
+              width: viewportSize.width > 0 ? viewportSize.width : undefined,
+              height: viewportSize.height > 0 ? viewportSize.height : undefined,
+              transform: `scale(${zoomScale})`,
+            }}
+          >
+            <canvas ref={canvasRef} />
 
-          {currentPageHits.map((hit) => {
-            const padX = 3;
-            const padY = 2;
-            const top = Math.max(0, viewportSize.height - (hit.y + hit.height) * renderScale - padY);
-            const left = Math.max(0, hit.x * renderScale - padX);
-            const width = Math.max(hit.width * renderScale + padX * 2, 10);
-            const height = Math.max(hit.height * renderScale + padY * 2, 12);
-            const isActive = hit.id === activeHitId;
+            {currentPageHits.map((hit) => {
+              const padX = 3;
+              const padY = 2;
+              const top = Math.max(0, viewportSize.height - (hit.y + hit.height) * renderScale - padY);
+              const left = Math.max(0, hit.x * renderScale - padX);
+              const width = Math.max(hit.width * renderScale + padX * 2, 10);
+              const height = Math.max(hit.height * renderScale + padY * 2, 12);
+              const isActive = hit.id === activeHitId;
 
-            return (
-              <button
-                key={hit.id}
-                type="button"
-                data-hit-id={hit.id}
-                className={`highlight ${isActive ? "active" : ""}`}
-                style={{ top, left, width, height }}
-                onClick={() => onJumpToHit(hit)}
-                aria-label={`Open match on page ${hit.pageNumber}`}
-              />
-            );
-          })}
+              return (
+                <button
+                  key={hit.id}
+                  type="button"
+                  data-hit-id={hit.id}
+                  className={`highlight ${isActive ? "active" : ""}`}
+                  style={{ top, left, width, height }}
+                  onClick={() => onJumpToHit(hit)}
+                  aria-label={`Open match on page ${hit.pageNumber}`}
+                />
+              );
+            })}
+          </div>
         </div>
       </div>
 
