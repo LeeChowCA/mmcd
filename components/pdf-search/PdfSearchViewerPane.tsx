@@ -105,10 +105,12 @@ export function PdfSearchViewerPane({
           <canvas ref={canvasRef} />
 
           {currentPageHits.map((hit) => {
-            const top = Math.max(0, viewportSize.height - (hit.y + hit.height) * renderScale - 1);
-            const left = Math.max(0, hit.x * renderScale - 1);
-            const width = Math.max(hit.width * renderScale + 2, 8);
-            const height = Math.max(hit.height * renderScale + 2, 11);
+            const padX = 3;
+            const padY = 2;
+            const top = Math.max(0, viewportSize.height - (hit.y + hit.height) * renderScale - padY);
+            const left = Math.max(0, hit.x * renderScale - padX);
+            const width = Math.max(hit.width * renderScale + padX * 2, 10);
+            const height = Math.max(hit.height * renderScale + padY * 2, 12);
             const isActive = hit.id === activeHitId;
 
             return (

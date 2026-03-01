@@ -178,6 +178,7 @@ body {
   border-radius: 0.85rem;
   padding: 0.85rem;
   min-height: 0;
+  min-width: 0;
 }
 
 .resultsPane {
@@ -234,7 +235,7 @@ body {
 
 .resultTop {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   gap: 0.45rem;
 }
@@ -260,11 +261,30 @@ body {
   font-size: 0.82rem;
 }
 
-.resultSnippet {
+.resultMetaRow {
   margin: 0;
+  display: flex;
+  gap: 0.35rem;
+  align-items: baseline;
+  font-size: 0.86rem;
+  color: #2a3f5f;
+}
+
+.resultKey {
+  color: #5a6d86;
+  font-weight: 600;
+  flex: 0 0 auto;
+}
+
+.resultValue {
   color: #22344e;
+  min-width: 0;
+}
+
+.resultSnippet {
+  margin-top: 0.08rem;
   line-height: 1.4;
-  font-size: 0.9rem;
+  font-size: 0.89rem;
 }
 
 .resultSnippet mark {
@@ -289,6 +309,7 @@ body {
   grid-template-rows: auto auto minmax(0, 1fr) auto;
   gap: 0.75rem;
   max-height: calc(100vh - 10.5rem);
+  overflow: hidden;
 }
 
 .viewerHeader {
@@ -354,6 +375,9 @@ body {
   overflow: auto;
   min-height: 20rem;
   height: 100%;
+  min-width: 0;
+  max-width: 100%;
+  contain: layout paint;
 }
 
 .canvasWrap {
