@@ -180,7 +180,11 @@ export function PdfSearchApp() {
 
         for (let pageNumber = 1; pageNumber <= loadedDoc.numPages; pageNumber += 1) {
           const page = await loadedDoc.getPage(pageNumber);
-          const textContent = await page.getTextContent();
+          const textContent = await page.getTextContent(
+            ({ disableCombineTextItems: true } as unknown) as Parameters<
+              typeof page.getTextContent
+            >[0],
+          );
           const items: IndexedTextItem[] = [];
 
           for (let itemIndex = 0; itemIndex < textContent.items.length; itemIndex += 1) {

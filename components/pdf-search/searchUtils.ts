@@ -202,16 +202,23 @@ export function findExactSearchHits(query: string, pageIndex: Map<number, Indexe
           break;
         }
 
+        let matchLength = term.length;
+        const trailingText = item.text.slice(hitIndex + term.length);
+        const trailingTokenMatch = trailingText.match(/^[A-Za-z0-9]+/);
+        if (trailingTokenMatch && trailingTokenMatch[0]) {
+          matchLength += trailingTokenMatch[0].length;
+        }
+
         const safeLength = Math.max(item.text.length, 1);
         const xOffset = (item.width * hitIndex) / safeLength;
-        const hitWidth = Math.max((item.width * term.length) / safeLength, 3);
+        const hitWidth = Math.max((item.width * matchLength) / safeLength, 3);
         const location = deriveHitLocation(items, i, pageNumber);
 
         hits.push({
           id: `${pageNumber}-${item.itemIndex}-${hitIndex}`,
           pageNumber,
           itemIndex: item.itemIndex,
-          snippet: buildSnippet(item.text, hitIndex, term.length),
+          snippet: buildSnippet(item.text, hitIndex, matchLength),
           x: item.x + xOffset,
           y: item.y,
           width: hitWidth,

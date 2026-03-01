@@ -358,14 +358,12 @@ body {
 
 .canvasWrap {
   position: relative;
-  width: fit-content;
-  max-width: 100%;
+  width: max-content;
   margin: 0 auto;
 }
 
 .canvasWrap canvas {
   display: block;
-  max-width: 100%;
   background: #ffffff;
 }
 

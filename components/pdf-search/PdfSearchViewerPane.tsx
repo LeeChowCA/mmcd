@@ -101,14 +101,14 @@ export function PdfSearchViewerPane({
       </div>
 
       <div className="viewerCanvasFrame" ref={canvasContainerRef}>
-        <div className="canvasWrap" style={{ maxWidth: viewportSize.width || undefined }}>
+        <div className="canvasWrap">
           <canvas ref={canvasRef} />
 
           {currentPageHits.map((hit) => {
-            const top = viewportSize.height - (hit.y + hit.height) * renderScale;
-            const left = hit.x * renderScale;
-            const width = Math.max(hit.width * renderScale, 6);
-            const height = Math.max(hit.height * renderScale, 10);
+            const top = Math.max(0, viewportSize.height - (hit.y + hit.height) * renderScale - 1);
+            const left = Math.max(0, hit.x * renderScale - 1);
+            const width = Math.max(hit.width * renderScale + 2, 8);
+            const height = Math.max(hit.height * renderScale + 2, 11);
             const isActive = hit.id === activeHitId;
 
             return (
