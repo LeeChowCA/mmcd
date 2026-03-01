@@ -839,7 +839,9 @@ export function PdfSearchApp() {
                     <li key={hit.id} className={active ? "active" : ""}>
                       <div className="resultTop">
                         <span className="resultDoc">{activeSource?.label ?? "MMCD"} Document</span>
-                        <span className="matchBadge">{hit.quality}</span>
+                        {searchMode === "natural" ? (
+                          <span className="matchBadge">{hit.quality}</span>
+                        ) : null}
                       </div>
 
                       <p className="resultPath">
@@ -873,7 +875,7 @@ export function PdfSearchApp() {
               Prev
             </button>
             <span className="toolbarValue">
-              PDF {pageCount === 0 ? 0 : currentPage} / {pageCount}
+              {pageCount === 0 ? 0 : currentPage} / {pageCount}
             </span>
             <button type="button" onClick={nextPage} disabled={currentPage >= pageCount}>
               Next
