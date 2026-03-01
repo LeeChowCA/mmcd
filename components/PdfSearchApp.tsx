@@ -1,243 +1,22 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type {
-  PDFDocumentProxy,
-  TextItem,
-  TextMarkedContent,
-} from "pdfjs-dist/types/src/display/api";
+import type { PDFDocumentProxy } from "pdfjs-dist/types/src/display/api";
 import type { DocumentSource } from "@/lib/documentSources";
-
-type SearchMode = "exact" | "natural";
-
-type IndexedTextItem = {
-  itemIndex: number;
-  text: string;
-  pageNumber: number;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-};
-
-type HitLocation = {
-  section: string;
-  part: string;
-  clause: string;
-};
-
-type SearchHit = {
-  id: string;
-  pageNumber: number;
-  itemIndex: number;
-  snippet: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  quality: "High Match";
-  location: HitLocation;
-};
-
-const BASE_RENDER_SCALE = 1.15;
-const MIN_ZOOM = 70;
-const MAX_ZOOM = 180;
-const ZOOM_STEP = 10;
-
-function isTextItem(item: TextItem | TextMarkedContent): item is TextItem {
-  return "str" in item;
-}
-
-function buildSnippet(text: string, start: number, length: number) {
-  const margin = 32;
-  const left = Math.max(0, start - margin);
-  const right = Math.min(text.length, start + length + margin);
-  const prefix = left > 0 ? "..." : "";
-  const suffix = right < text.length ? "..." : "";
-  return `${prefix}${text.slice(left, right)}${suffix}`;
-}
-
-function escapeRegExp(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function renderMarkedSnippet(text: string, term: string) {
-  const cleanedTerm = term.trim();
-  if (!cleanedTerm) {
-    return text;
-  }
-
-  const regex = new RegExp(`(${escapeRegExp(cleanedTerm)})`, "ig");
-  const segments = text.split(regex);
-  const loweredTerm = cleanedTerm.toLowerCase();
-
-  return segments.map((segment, index) =>
-    segment.toLowerCase() === loweredTerm ? <mark key={index}>{segment}</mark> : segment,
-  );
-}
-
-function normalizeForTokenSearch(value: string) {
-  return value
-    .normalize("NFKC")
-    .toLowerCase()
-    .replace(/[\u2010-\u2015\u2212-]+/g, " ");
-}
-
-function tokenizeForSearch(value: string) {
-  return normalizeForTokenSearch(value).match(/[a-z0-9]+(?:\.[a-z0-9]+)*/g) ?? [];
-}
-
-function buildContextSnippet(items: IndexedTextItem[], startIndex: number, endIndex: number) {
-  const from = Math.max(0, startIndex - 1);
-  const to = Math.min(items.length - 1, endIndex + 1);
-  return items
-    .slice(from, to + 1)
-    .map((item) => item.text)
-    .join(" ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function buildTopLines(items: IndexedTextItem[]) {
-  if (items.length === 0) {
-    return [];
-  }
-
-  const maxY = items.reduce((currentMax, item) => Math.max(currentMax, item.y), Number.NEGATIVE_INFINITY);
-  const headerBandMinY = maxY - 46;
-  const sorted = items
-    .filter((item) => item.y >= headerBandMinY)
-    .sort((a, b) => b.y - a.y || a.x - b.x);
-  const lines: Array<{ y: number; items: IndexedTextItem[] }> = [];
-
-  for (const item of sorted) {
-    const line = lines.find((entry) => Math.abs(entry.y - item.y) <= 2.5);
-    if (line) {
-      line.items.push(item);
-      continue;
-    }
-    lines.push({ y: item.y, items: [item] });
-  }
-
-  return lines
-    .sort((a, b) => b.y - a.y)
-    .slice(0, 8)
-    .map((line) =>
-      line.items
-        .sort((a, b) => a.x - b.x)
-        .map((item) => item.text)
-        .join(" ")
-        .replace(/\s+/g, " ")
-        .trim(),
-    )
-    .filter(Boolean);
-}
-
-function cleanExtractedTitle(value: string) {
-  const cleaned = value
-    .replace(/\bCITY OF SURREY\b/gi, " ")
-    .replace(/\bENGINEERING DEPARTMENT\b/gi, " ")
-    .replace(/\bMMCD\s+SECTION\s+[0-9A-Za-z.\s-]+/gi, " ")
-    .replace(/\bMMCD\s+(?:SGC|SS|SMMCD|VMMCD)\b/gi, " ")
-    .replace(/\b(?:SS|SGC)\s*PAGE\s+[A-Za-z0-9.-]+\b/gi, " ")
-    .replace(/\bPAGE\s+[A-Za-z0-9.-]+\b/gi, " ")
-    .replace(/\b20\s*2\s*4\b/gi, " ")
-    .replace(/\b20\d{2}\b/g, " ")
-    .replace(/\s*-\s*/g, "-")
-    .replace(/^[\s\-|,;:]+|[\s\-|,;:]+$/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-
-  return cleaned.length > 0 ? cleaned : null;
-}
-
-function extractPrintedPageLabel(items: IndexedTextItem[]) {
-  const joined = items
-    .map((item) => item.text)
-    .join(" ")
-    .replace(/\s+/g, " ")
-    .trim();
-
-  if (!joined) {
-    return null;
-  }
-
-  const match = joined.match(/\b((?:[A-Z]{1,4}\s+)?PAGE\s+[A-Z0-9.-]+)\b/i);
-  return match ? match[1].toUpperCase() : null;
-}
-
-function extractSectionTitle(items: IndexedTextItem[]) {
-  const topLines = buildTopLines(items);
-
-  for (const line of topLines) {
-    if (!/TABLE OF CONTENTS/i.test(line)) {
-      continue;
-    }
-
-    const cleanedTocTitle = cleanExtractedTitle(line);
-    if (cleanedTocTitle) {
-      return cleanedTocTitle;
-    }
-  }
-
-  const candidates = topLines.filter((line) => {
-    const cleanedLine = cleanExtractedTitle(line);
-    if (!cleanedLine || cleanedLine.length < 10) {
-      return false;
-    }
-    if (/^(?:MMCD|SECTION|PAGE)\b/i.test(cleanedLine)) {
-      return false;
-    }
-    const alphaOnly = cleanedLine.replace(/[^A-Za-z]/g, "");
-    if (alphaOnly.length < 6) {
-      return false;
-    }
-    const uppercaseCount = alphaOnly.replace(/[^A-Z]/g, "").length;
-    return uppercaseCount / alphaOnly.length >= 0.55;
-  });
-
-  if (candidates.length === 0) {
-    return null;
-  }
-
-  const bestRawLine = candidates.sort((a, b) => b.length - a.length)[0];
-  return cleanExtractedTitle(bestRawLine);
-}
-
-function deriveHitLocation(
-  pageItems: IndexedTextItem[],
-  itemIndex: number,
-  pageNumber: number,
-): HitLocation {
-  let section = `Page ${pageNumber}`;
-  let part = "Part -";
-  let clause = `Match ${itemIndex + 1}`;
-
-  for (let i = itemIndex; i >= 0 && i >= itemIndex - 40; i -= 1) {
-    const text = pageItems[i]?.text.trim();
-    if (!text) {
-      continue;
-    }
-
-    if (section.startsWith("Page") && /^Section\s+/i.test(text)) {
-      section = text;
-    }
-
-    if (part === "Part -" && /^Part\s+[0-9A-Za-z.\-]+/i.test(text)) {
-      part = text;
-    }
-
-    if (clause.startsWith("Match") && /^[0-9]+(?:\.[0-9]+)+/.test(text)) {
-      clause = text.split(/\s+/).slice(0, 2).join(" ");
-    }
-
-    if (!section.startsWith("Page") && part !== "Part -" && !clause.startsWith("Match")) {
-      break;
-    }
-  }
-
-  return { section, part, clause };
-}
+import { PdfSearchResultsPane } from "./pdf-search/PdfSearchResultsPane";
+import { PdfSearchTopBar } from "./pdf-search/PdfSearchTopBar";
+import { PdfSearchViewerPane } from "./pdf-search/PdfSearchViewerPane";
+import {
+  BASE_RENDER_SCALE,
+  MAX_ZOOM,
+  MIN_ZOOM,
+  ZOOM_STEP,
+  extractPrintedPageLabel,
+  extractSectionTitle,
+  findExactSearchHits,
+  isTextItem,
+} from "./pdf-search/searchUtils";
+import type { IndexedTextItem, SearchHit, SearchMode } from "./pdf-search/types";
 
 export function PdfSearchApp() {
   const [query, setQuery] = useState("");
@@ -252,9 +31,7 @@ export function PdfSearchApp() {
 
   const [pageCount, setPageCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageIndex, setPageIndex] = useState<Map<number, IndexedTextItem[]>>(
-    new Map(),
-  );
+  const [pageIndex, setPageIndex] = useState<Map<number, IndexedTextItem[]>>(new Map());
   const [indexing, setIndexing] = useState(false);
 
   const [searchHits, setSearchHits] = useState<SearchHit[]>([]);
@@ -274,6 +51,7 @@ export function PdfSearchApp() {
     () => sources.find((source) => source.id === sourceId) ?? null,
     [sourceId, sources],
   );
+  const activeSourceLabel = activeSource?.label ?? "No source";
 
   const activeHit = useMemo(
     () => searchHits.find((hit) => hit.id === activeHitId) ?? null,
@@ -289,6 +67,7 @@ export function PdfSearchApp() {
     () => BASE_RENDER_SCALE * (zoomPercent / 100),
     [zoomPercent],
   );
+
   const activeHitPrintedPageLabel = useMemo(
     () => (activeHit ? printedPageLabels.get(activeHit.pageNumber) ?? null : null),
     [activeHit, printedPageLabels],
@@ -447,9 +226,7 @@ export function PdfSearchApp() {
         }
       } catch {
         if (!cancelled) {
-          setSourceError(
-            `Unable to load ${activeSource.url}. Confirm the PDF exists in public/.`,
-          );
+          setSourceError(`Unable to load ${activeSource.url}. Confirm the PDF exists in public/.`);
         }
       } finally {
         if (!cancelled) {
@@ -531,135 +308,6 @@ export function PdfSearchApp() {
     }
   }, [activeHitId, currentPage]);
 
-  function runExactSearch() {
-    const term = query.trim().toLowerCase();
-    if (!term) {
-      setSearchHits([]);
-      setActiveHitId(null);
-      setSearchMessage("Enter a keyword to search.");
-      return;
-    }
-
-    const hits: SearchHit[] = [];
-
-    for (const [pageNumber, items] of pageIndex.entries()) {
-      for (let i = 0; i < items.length; i += 1) {
-        const item = items[i];
-        const lowerText = item.text.toLowerCase();
-        let start = 0;
-
-        while (start < lowerText.length) {
-          const hitIndex = lowerText.indexOf(term, start);
-          if (hitIndex === -1) {
-            break;
-          }
-
-          const safeLength = Math.max(item.text.length, 1);
-          const xOffset = (item.width * hitIndex) / safeLength;
-          const hitWidth = Math.max((item.width * term.length) / safeLength, 3);
-          const location = deriveHitLocation(items, i, pageNumber);
-
-          hits.push({
-            id: `${pageNumber}-${item.itemIndex}-${hitIndex}`,
-            pageNumber,
-            itemIndex: item.itemIndex,
-            snippet: buildSnippet(item.text, hitIndex, term.length),
-            x: item.x + xOffset,
-            y: item.y,
-            width: hitWidth,
-            height: item.height,
-            location,
-            quality: "High Match",
-          });
-
-          start = hitIndex + term.length;
-        }
-      }
-    }
-
-    if (hits.length === 0) {
-      const queryTokens = tokenizeForSearch(query);
-
-      if (queryTokens.length > 0) {
-        for (const [pageNumber, items] of pageIndex.entries()) {
-          const flattenedTokens: Array<{
-            token: string;
-            pageItemIndex: number;
-          }> = [];
-
-          for (let i = 0; i < items.length; i += 1) {
-            const normalizedItem = normalizeForTokenSearch(items[i].text);
-            const tokenRegex = /[a-z0-9]+(?:\.[a-z0-9]+)*/g;
-            let tokenMatch = tokenRegex.exec(normalizedItem);
-
-            while (tokenMatch) {
-              flattenedTokens.push({
-                token: tokenMatch[0],
-                pageItemIndex: i,
-              });
-              tokenMatch = tokenRegex.exec(normalizedItem);
-            }
-          }
-
-          for (let i = 0; i <= flattenedTokens.length - queryTokens.length; i += 1) {
-            let matches = true;
-            for (let j = 0; j < queryTokens.length; j += 1) {
-              const queryToken = queryTokens[j];
-              const candidateToken = flattenedTokens[i + j].token;
-              const isLastQueryToken = j === queryTokens.length - 1;
-              const isMatch =
-                candidateToken === queryToken ||
-                (isLastQueryToken && queryToken.length >= 2 && candidateToken.startsWith(queryToken));
-
-              if (!isMatch) {
-                matches = false;
-                break;
-              }
-            }
-
-            if (!matches) {
-              continue;
-            }
-
-            const first = flattenedTokens[i];
-            const last = flattenedTokens[i + queryTokens.length - 1];
-            const firstItem = items[first.pageItemIndex];
-            if (!firstItem) {
-              continue;
-            }
-
-            const safeLength = Math.max(firstItem.text.length, 1);
-            const hitWidth = Math.max((firstItem.width * queryTokens[0].length) / safeLength, 3);
-
-            hits.push({
-              id: `${pageNumber}-${firstItem.itemIndex}-tokens-${i}`,
-              pageNumber,
-              itemIndex: firstItem.itemIndex,
-              snippet: buildContextSnippet(items, first.pageItemIndex, last.pageItemIndex),
-              x: firstItem.x,
-              y: firstItem.y,
-              width: hitWidth,
-              height: firstItem.height,
-              location: deriveHitLocation(items, first.pageItemIndex, pageNumber),
-              quality: "High Match",
-            });
-          }
-        }
-      }
-    }
-
-    setSearchHits(hits);
-
-    if (hits.length > 0) {
-      setCurrentPage(hits[0].pageNumber);
-      setActiveHitId(hits[0].id);
-      setSearchMessage(`Found ${hits.length} results in ${activeSource?.label ?? "source"}.`);
-    } else {
-      setActiveHitId(null);
-      setSearchMessage("No exact matches found in this source.");
-    }
-  }
-
   function executeSearch() {
     if (searchMode === "natural") {
       setSearchHits([]);
@@ -668,7 +316,17 @@ export function PdfSearchApp() {
       return;
     }
 
-    runExactSearch();
+    const hits = findExactSearchHits(query, pageIndex);
+    setSearchHits(hits);
+
+    if (hits.length > 0) {
+      setCurrentPage(hits[0].pageNumber);
+      setActiveHitId(hits[0].id);
+      setSearchMessage(`Found ${hits.length} results in ${activeSource?.label ?? "source"}.`);
+    } else {
+      setActiveHitId(null);
+      setSearchMessage(query.trim() ? "No exact matches found in this source." : "Enter a keyword to search.");
+    }
   }
 
   function onSearchSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -732,212 +390,72 @@ export function PdfSearchApp() {
 
   const isBusy = loadingSources || sourceLoading || indexing;
 
+  const searchButtonLabel = loadingSources
+    ? "Loading sources..."
+    : sourceLoading
+      ? "Loading document..."
+      : indexing
+        ? "Indexing..."
+        : "Search";
+
   return (
     <main className="appShell">
-      <header className="topSearchStrip">
-        <form className="searchForm" onSubmit={onSearchSubmit}>
-          <label htmlFor="keyword" className="srOnly">
-            Keyword
-          </label>
-          <input
-            id="keyword"
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            onKeyDown={onKeywordKeyDown}
-            placeholder="Search specs, requirements, procedures..."
-            className="keywordInput"
-          />
-
-          <label className="scopeSelect">
-            <span>Search in:</span>
-            <select
-              value={sourceId}
-              onChange={(event) => setSourceId(event.target.value)}
-              disabled={loadingSources || sources.length === 0}
-            >
-              {sources.length === 0 ? (
-                <option value="">
-                  {loadingSources ? "Loading..." : "No PDF sources"}
-                </option>
-              ) : (
-                sources.map((source) => (
-                  <option key={source.id} value={source.id}>
-                    {source.label}
-                  </option>
-                ))
-              )}
-            </select>
-          </label>
-
-          <div className="modeSwitch" aria-label="Search mode">
-            <button
-              type="button"
-              className={searchMode === "exact" ? "active" : ""}
-              onClick={() => setSearchMode("exact")}
-            >
-              Exact
-            </button>
-            <button
-              type="button"
-              className={searchMode === "natural" ? "active" : ""}
-              onClick={() => setSearchMode("natural")}
-            >
-              Natural
-            </button>
-          </div>
-
-          <button type="submit" className="searchButton" disabled={isBusy || !activeSource}>
-            {loadingSources
-              ? "Loading sources..."
-              : sourceLoading
-                ? "Loading document..."
-                : indexing
-                  ? "Indexing..."
-                  : "Search"}
-          </button>
-        </form>
-
-        <div className="utilityActions">
-          <button type="button" aria-label="Notifications">
-            Alerts
-          </button>
-          <button type="button" aria-label="Settings">
-            Settings
-          </button>
-          <button type="button" aria-label="Help">
-            Help
-          </button>
-        </div>
-      </header>
+      <PdfSearchTopBar
+        query={query}
+        onQueryChange={setQuery}
+        onKeywordKeyDown={onKeywordKeyDown}
+        searchMode={searchMode}
+        onSearchModeChange={setSearchMode}
+        onSearchSubmit={onSearchSubmit}
+        sourceId={sourceId}
+        onSourceChange={setSourceId}
+        loadingSources={loadingSources}
+        sources={sources}
+        isSearchDisabled={isBusy || !activeSource}
+        searchButtonLabel={searchButtonLabel}
+      />
 
       {sourceError ? <p className="bannerError">{sourceError}</p> : null}
 
       <section className="contentGrid">
-        <aside className="resultsPane">
-          <div className="paneHeader">
-            <h2>
-              {searchHits.length} results in {activeSource?.label ?? "No source"}
-            </h2>
-            <p>{searchMode === "exact" ? "Keyword Search" : "Natural Search (coming soon)"}</p>
-          </div>
+        <PdfSearchResultsPane
+          searchHits={searchHits}
+          activeHitId={activeHitId}
+          activeSourceLabel={activeSourceLabel}
+          searchMode={searchMode}
+          printedPageLabels={printedPageLabels}
+          sectionTitlesByPage={sectionTitlesByPage}
+          query={query}
+          onJumpToHit={jumpToHit}
+        />
 
-          <div className="resultsList">
-            {searchHits.length === 0 ? (
-              <p className="emptyState">
-                Enter a keyword, choose a source, and run search to view matches.
-              </p>
-            ) : (
-              <ul>
-                {searchHits.map((hit) => {
-                  const active = hit.id === activeHitId;
-                  const hitPrintedPageLabel =
-                    printedPageLabels.get(hit.pageNumber) ?? hit.location.clause;
-                  const hitSectionTitle =
-                    sectionTitlesByPage.get(hit.pageNumber) ?? hit.location.section;
-                  return (
-                    <li key={hit.id} className={active ? "active" : ""}>
-                      <div className="resultTop">
-                        <span className="resultDoc">{activeSource?.label ?? "MMCD"} Document</span>
-                        {searchMode === "natural" ? (
-                          <span className="matchBadge">{hit.quality}</span>
-                        ) : null}
-                      </div>
-
-                      <p className="resultPath">
-                        {hitSectionTitle} - {hitPrintedPageLabel}
-                      </p>
-
-                      <p className="resultSnippet">{renderMarkedSnippet(hit.snippet, query)}</p>
-
-                      <button type="button" className="openButton" onClick={() => jumpToHit(hit)}>
-                        Open
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
-        </aside>
-
-        <section className="viewerPane">
-          <div className="paneHeader viewerHeader">
-            <div>
-              <h2>Viewing: {activeSource?.label ?? "No source selected"}</h2>
-              <p>Matches in this document: {searchHits.length}</p>
-            </div>
-            <div className="viewerStatus">{searchMessage ?? "Ready for search."}</div>
-          </div>
-
-          <div className="viewerToolbar">
-            <button type="button" onClick={previousPage} disabled={currentPage <= 1}>
-              Prev
-            </button>
-            <span className="toolbarValue">
-              {pageCount === 0 ? 0 : currentPage} / {pageCount}
-            </span>
-            <button type="button" onClick={nextPage} disabled={currentPage >= pageCount}>
-              Next
-            </button>
-
-            <span className="toolbarDivider" />
-
-            <button type="button" onClick={zoomOut} disabled={zoomPercent <= MIN_ZOOM}>
-              -
-            </button>
-            <span className="toolbarValue">{zoomPercent}%</span>
-            <button type="button" onClick={zoomIn} disabled={zoomPercent >= MAX_ZOOM}>
-              +
-            </button>
-            <button type="button" onClick={resetZoom}>
-              100%
-            </button>
-
-            <span className="toolbarDivider" />
-
-            <button type="button" onClick={printSource} disabled={!activeSource}>
-              Print
-            </button>
-            <button type="button" onClick={downloadSource} disabled={!activeSource}>
-              Download
-            </button>
-          </div>
-
-          <div className="viewerCanvasFrame" ref={canvasContainerRef}>
-            <div className="canvasWrap" style={{ maxWidth: viewportSize.width || undefined }}>
-              <canvas ref={canvasRef} />
-
-              {currentPageHits.map((hit) => {
-                const top = viewportSize.height - (hit.y + hit.height) * renderScale;
-                const left = hit.x * renderScale;
-                const width = Math.max(hit.width * renderScale, 6);
-                const height = Math.max(hit.height * renderScale, 10);
-                const isActive = hit.id === activeHitId;
-
-                return (
-                  <button
-                    key={hit.id}
-                    type="button"
-                    data-hit-id={hit.id}
-                    className={`highlight ${isActive ? "active" : ""}`}
-                    style={{ top, left, width, height }}
-                    onClick={() => jumpToHit(hit)}
-                    aria-label={`Open match on page ${hit.pageNumber}`}
-                  />
-                );
-              })}
-            </div>
-          </div>
-
-          {activeHit ? (
-            <div className="activeMatchBar">
-              Active match:{" "}
-              {activeHitPrintedPageLabel ?? `PDF page ${activeHit.pageNumber}`}
-              , item {activeHit.itemIndex + 1}
-            </div>
-          ) : null}
-        </section>
+        <PdfSearchViewerPane
+          activeSourceLabel={activeSource?.label ?? "No source selected"}
+          searchHitsCount={searchHits.length}
+          searchMessage={searchMessage}
+          currentPage={currentPage}
+          pageCount={pageCount}
+          onPreviousPage={previousPage}
+          onNextPage={nextPage}
+          zoomPercent={zoomPercent}
+          minZoom={MIN_ZOOM}
+          maxZoom={MAX_ZOOM}
+          onZoomOut={zoomOut}
+          onZoomIn={zoomIn}
+          onResetZoom={resetZoom}
+          onPrintSource={printSource}
+          onDownloadSource={downloadSource}
+          hasActiveSource={Boolean(activeSource)}
+          canvasContainerRef={canvasContainerRef}
+          canvasRef={canvasRef}
+          viewportSize={viewportSize}
+          currentPageHits={currentPageHits}
+          renderScale={renderScale}
+          activeHitId={activeHitId}
+          onJumpToHit={jumpToHit}
+          activeHit={activeHit}
+          activeHitPrintedPageLabel={activeHitPrintedPageLabel}
+        />
       </section>
     </main>
   );
