@@ -182,6 +182,20 @@ function deriveHitLocation(
   return { section, part, clause };
 }
 
+function areItemsLikelyContinuousToken(previous: IndexedTextItem, current: IndexedTextItem) {
+  const height = Math.max(previous.height, current.height, 1);
+  const sameLine = Math.abs(previous.y - current.y) <= height * 0.6;
+  if (!sameLine) {
+    return false;
+  }
+
+  const previousRight = previous.x + previous.width;
+  const gap = current.x - previousRight;
+
+  // Allow tiny overlap/kerning and small positive gaps for split glyph runs.
+  return gap >= -height * 0.8 && gap <= height * 1.2;
+}
+
 export function findExactSearchHits(query: string, pageIndex: Map<number, IndexedTextItem[]>) {
   const term = query.trim().toLowerCase();
   if (!term) {
@@ -189,8 +203,12 @@ export function findExactSearchHits(query: string, pageIndex: Map<number, Indexe
   }
 
   const hits: SearchHit[] = [];
+  const queryTokens = tokenizeForSearch(query);
+  const firstQueryToken = queryTokens[0];
 
   for (const [pageNumber, items] of pageIndex.entries()) {
+    const pageHitsBefore = hits.length;
+
     for (let i = 0; i < items.length; i += 1) {
       const item = items[i];
       const lowerText = item.text.toLowerCase();
@@ -230,22 +248,12 @@ export function findExactSearchHits(query: string, pageIndex: Map<number, Indexe
         start = hitIndex + term.length;
       }
     }
-  }
 
-  if (hits.length > 0) {
-    return hits;
-  }
+    const pageHasDirectHits = hits.length > pageHitsBefore;
+    if (pageHasDirectHits || queryTokens.length === 0 || !firstQueryToken) {
+      continue;
+    }
 
-  const queryTokens = tokenizeForSearch(query);
-  if (queryTokens.length === 0) {
-    return hits;
-  }
-  const firstQueryToken = queryTokens[0];
-  if (!firstQueryToken) {
-    return hits;
-  }
-
-  for (const [pageNumber, items] of pageIndex.entries()) {
     const flattenedTokens: Array<{
       token: string;
       pageItemIndex: number;
@@ -263,6 +271,66 @@ export function findExactSearchHits(query: string, pageIndex: Map<number, Indexe
         });
         tokenMatch = tokenRegex.exec(normalizedItem);
       }
+    }
+
+    if (queryTokens.length === 1) {
+      const target = queryTokens[0];
+      for (let i = 0; i < flattenedTokens.length; i += 1) {
+        let combined = "";
+        let lastTokenOffset = i;
+
+        for (
+          let offset = i;
+          offset < flattenedTokens.length && offset - i < 3;
+          offset += 1, lastTokenOffset = offset
+        ) {
+          const current = flattenedTokens[offset];
+          if (offset > i) {
+            const previous = flattenedTokens[offset - 1];
+            const previousItem = items[previous.pageItemIndex];
+            const currentItem = items[current.pageItemIndex];
+            if (!previousItem || !currentItem || !areItemsLikelyContinuousToken(previousItem, currentItem)) {
+              break;
+            }
+          }
+
+          combined += current.token;
+
+          const isMatch = combined === target || (target.length >= 2 && combined.startsWith(target));
+          if (!isMatch) {
+            if (combined.length > target.length + 4) {
+              break;
+            }
+            continue;
+          }
+
+          const first = flattenedTokens[i];
+          const last = flattenedTokens[lastTokenOffset];
+          const firstItem = items[first.pageItemIndex];
+          const lastItem = items[last.pageItemIndex];
+          if (!firstItem || !lastItem) {
+            break;
+          }
+
+          const spanningWidth = Math.max(lastItem.x + lastItem.width - firstItem.x, firstItem.width, 3);
+
+          hits.push({
+            id: `${pageNumber}-${firstItem.itemIndex}-tokens-${i}-${lastTokenOffset}`,
+            pageNumber,
+            itemIndex: firstItem.itemIndex,
+            snippet: buildContextSnippet(items, first.pageItemIndex, last.pageItemIndex),
+            x: firstItem.x,
+            y: firstItem.y,
+            width: spanningWidth,
+            height: Math.max(firstItem.height, lastItem.height),
+            location: deriveHitLocation(items, first.pageItemIndex, pageNumber),
+            quality: "High Match",
+          });
+
+          break;
+        }
+      }
+      continue;
     }
 
     for (let i = 0; i <= flattenedTokens.length - queryTokens.length; i += 1) {
