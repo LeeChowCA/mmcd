@@ -28,10 +28,11 @@ body {
 }
 
 .appShell {
-  min-height: 100vh;
+  height: 100vh;
   padding: 1.2rem;
   display: grid;
   gap: 1rem;
+  overflow: hidden;
 }
 
 .topSearchStrip {
@@ -184,7 +185,7 @@ body {
 .resultsPane {
   display: grid;
   grid-template-rows: auto 1fr;
-  max-height: calc(100vh - 10.5rem);
+  height: calc(100vh - 10.5rem);
 }
 
 .paneHeader h2 {
@@ -308,7 +309,7 @@ body {
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr) auto;
   gap: 0.75rem;
-  max-height: calc(100vh - 10.5rem);
+  height: calc(100vh - 10.5rem);
   overflow: hidden;
 }
 
@@ -373,7 +374,7 @@ body {
   background: #f0f4f9;
   padding: 0.58rem;
   overflow: auto;
-  min-height: 20rem;
+  min-height: 0;
   height: 100%;
   min-width: 0;
   max-width: 100%;
@@ -433,16 +434,19 @@ body {
 
   .resultsPane {
     min-height: 16rem;
-    max-height: none;
+    height: auto;
   }
 
   .viewerPane {
-    max-height: none;
+    height: auto;
   }
 }
 
 @media (max-width: 760px) {
   .appShell {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
     padding: 0.8rem;
   }
 
