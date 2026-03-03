@@ -34,6 +34,66 @@ function tokenizeForSearch(value: string) {
   return normalizeForTokenSearch(value).match(/[a-z0-9]+(?:\.[a-z0-9]+)*/g) ?? [];
 }
 
+function levenshteinDistance(a: string, b: string) {
+  if (a === b) {
+    return 0;
+  }
+  if (a.length === 0) {
+    return b.length;
+  }
+  if (b.length === 0) {
+    return a.length;
+  }
+
+  const rows = a.length + 1;
+  const cols = b.length + 1;
+  const matrix: number[][] = Array.from({ length: rows }, () => Array<number>(cols).fill(0));
+
+  for (let i = 0; i < rows; i += 1) {
+    matrix[i][0] = i;
+  }
+  for (let j = 0; j < cols; j += 1) {
+    matrix[0][j] = j;
+  }
+
+  for (let i = 1; i < rows; i += 1) {
+    for (let j = 1; j < cols; j += 1) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1,
+        matrix[i][j - 1] + 1,
+        matrix[i - 1][j - 1] + cost,
+      );
+    }
+  }
+
+  return matrix[a.length][b.length];
+}
+
+function tokenSimilarity(a: string, b: string) {
+  if (!a || !b) {
+    return 0;
+  }
+  if (a === b) {
+    return 1;
+  }
+
+  const minLen = Math.min(a.length, b.length);
+  const maxLen = Math.max(a.length, b.length);
+  const prefixLen = (() => {
+    let count = 0;
+    while (count < minLen && a[count] === b[count]) {
+      count += 1;
+    }
+    return count;
+  })();
+  const prefixScore = prefixLen / maxLen;
+
+  const distance = levenshteinDistance(a, b);
+  const editScore = 1 - distance / maxLen;
+  return Math.max(editScore, prefixScore);
+}
+
 function buildContextSnippet(items: IndexedTextItem[], startIndex: number, endIndex: number) {
   const from = Math.max(0, startIndex - 1);
   const to = Math.min(items.length - 1, endIndex + 1);
@@ -294,6 +354,120 @@ export function buildNaturalSnippetForPage(
   }
 
   return `${cleanedFallback.slice(0, 177).trimEnd()}...`;
+}
+
+type TokenSpan = {
+  value: string;
+  start: number;
+  end: number;
+};
+
+function getTokenSpans(text: string): TokenSpan[] {
+  const spans: TokenSpan[] = [];
+  const regex = /[A-Za-z0-9]+(?:\.[A-Za-z0-9]+)*/g;
+  let match = regex.exec(text);
+
+  while (match) {
+    const token = match[0];
+    const start = match.index ?? 0;
+    spans.push({
+      value: token.toLowerCase(),
+      start,
+      end: start + token.length,
+    });
+    match = regex.exec(text);
+  }
+
+  return spans;
+}
+
+export function findNaturalAnchorsForPage(
+  query: string,
+  items: IndexedTextItem[],
+  pageNumber: number,
+  limit = 8,
+) {
+  const queryTokens = tokenizeForSearch(query).filter((token) => token.length >= 2);
+  if (queryTokens.length === 0 || items.length === 0) {
+    return [] as SearchHit[];
+  }
+
+  const minScore = 0.62;
+  const candidates: Array<{ score: number; hit: SearchHit }> = [];
+
+  for (let i = 0; i < items.length; i += 1) {
+    const item = items[i];
+    const spans = getTokenSpans(item.text);
+    if (spans.length === 0) {
+      continue;
+    }
+
+    let bestScore = 0;
+    let bestStartToken = -1;
+    let bestLength = 0;
+
+    if (queryTokens.length === 1) {
+      const target = queryTokens[0];
+      for (let tokenIndex = 0; tokenIndex < spans.length; tokenIndex += 1) {
+        const score = tokenSimilarity(target, spans[tokenIndex].value);
+        if (score > bestScore) {
+          bestScore = score;
+          bestStartToken = tokenIndex;
+          bestLength = 1;
+        }
+      }
+    } else {
+      for (let tokenIndex = 0; tokenIndex <= spans.length - queryTokens.length; tokenIndex += 1) {
+        let total = 0;
+        for (let j = 0; j < queryTokens.length; j += 1) {
+          total += tokenSimilarity(queryTokens[j], spans[tokenIndex + j].value);
+        }
+        const score = total / queryTokens.length;
+        if (score > bestScore) {
+          bestScore = score;
+          bestStartToken = tokenIndex;
+          bestLength = queryTokens.length;
+        }
+      }
+    }
+
+    if (bestScore < minScore || bestStartToken < 0 || bestLength <= 0) {
+      continue;
+    }
+
+    const firstSpan = spans[bestStartToken];
+    const lastSpan = spans[bestStartToken + bestLength - 1];
+    if (!firstSpan || !lastSpan) {
+      continue;
+    }
+
+    const charStart = firstSpan.start;
+    const charEnd = lastSpan.end;
+    const safeLength = Math.max(item.text.length, 1);
+    const xOffset = (item.width * charStart) / safeLength;
+    const hitWidth = Math.max((item.width * (charEnd - charStart)) / safeLength, 8);
+
+    candidates.push({
+      score: bestScore,
+      hit: {
+        id: `${pageNumber}-${item.itemIndex}-natural-${bestStartToken}`,
+        pageNumber,
+        itemIndex: item.itemIndex,
+        snippet: buildSnippet(item.text, charStart, Math.max(charEnd - charStart, 2)),
+        x: item.x + xOffset,
+        y: item.y,
+        width: hitWidth,
+        height: item.height,
+        quality: `${(bestScore * 100).toFixed(1)}% Match`,
+        location: deriveHitLocation(items, i, pageNumber),
+      },
+    });
+  }
+
+  return candidates
+    .sort((a, b) => b.score - a.score || a.hit.itemIndex - b.hit.itemIndex)
+    .slice(0, Math.max(1, limit))
+    .map((entry) => entry.hit);
 }
 
 export function findExactSearchHits(query: string, pageIndex: Map<number, IndexedTextItem[]>) {

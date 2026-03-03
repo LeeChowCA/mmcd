@@ -15,6 +15,7 @@ import {
   extractPrintedPageLabel,
   extractSectionTitle,
   findExactSearchHits,
+  findNaturalAnchorsForPage,
   isTextItem,
 } from "./pdf-search/searchUtils";
 import type { IndexedTextItem, SearchHit, SearchMode } from "./pdf-search/types";
@@ -362,6 +363,7 @@ export function PdfSearchApp() {
         const hits = Array.isArray(payload.hits) ? payload.hits : [];
         const snippetByPage = new Map<number, string>();
         const exactAnchorsByPage = new Map<number, SearchHit[]>();
+        const naturalAnchorsByPage = new Map<number, SearchHit[]>();
         const pageAnchorCursor = new Map<number, number>();
 
         const enrichedHits = hits.map((hit) => {
@@ -381,7 +383,17 @@ export function PdfSearchApp() {
             exactAnchorsByPage.set(hit.pageNumber, anchors);
           }
 
-          const anchorsForPage = exactAnchorsByPage.get(hit.pageNumber) ?? [];
+          if (!naturalAnchorsByPage.has(hit.pageNumber)) {
+            const anchors = pageItems.length
+              ? findNaturalAnchorsForPage(trimmedQuery, pageItems, hit.pageNumber, 12)
+              : [];
+            anchors.sort((a, b) => a.itemIndex - b.itemIndex || a.x - b.x);
+            naturalAnchorsByPage.set(hit.pageNumber, anchors);
+          }
+
+          const exactAnchors = exactAnchorsByPage.get(hit.pageNumber) ?? [];
+          const fuzzyAnchors = naturalAnchorsByPage.get(hit.pageNumber) ?? [];
+          const anchorsForPage = exactAnchors.length > 0 ? exactAnchors : fuzzyAnchors;
           const cursor = pageAnchorCursor.get(hit.pageNumber) ?? 0;
           const anchor =
             anchorsForPage.length > 0 ? anchorsForPage[cursor % anchorsForPage.length] : null;
