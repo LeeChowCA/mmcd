@@ -11,6 +11,7 @@ import {
   MAX_ZOOM,
   MIN_ZOOM,
   ZOOM_STEP,
+  buildNaturalSnippetForPage,
   extractPrintedPageLabel,
   extractSectionTitle,
   findExactSearchHits,
@@ -356,13 +357,27 @@ export function PdfSearchApp() {
 
         const payload = (await response.json()) as NaturalSearchPayload;
         const hits = Array.isArray(payload.hits) ? payload.hits : [];
-        setSearchHits(hits);
+        const snippetByPage = new Map<number, string>();
+        const enrichedHits = hits.map((hit) => {
+          if (!snippetByPage.has(hit.pageNumber)) {
+            const pageItems = pageIndex.get(hit.pageNumber) ?? [];
+            const naturalSnippet = buildNaturalSnippetForPage(trimmedQuery, pageItems, hit.snippet);
+            snippetByPage.set(hit.pageNumber, naturalSnippet);
+          }
 
-        if (hits.length > 0) {
-          setCurrentPage(hits[0].pageNumber);
-          setActiveHitId(hits[0].id);
+          return {
+            ...hit,
+            snippet: snippetByPage.get(hit.pageNumber) ?? hit.snippet,
+          };
+        });
+
+        setSearchHits(enrichedHits);
+
+        if (enrichedHits.length > 0) {
+          setCurrentPage(enrichedHits[0].pageNumber);
+          setActiveHitId(enrichedHits[0].id);
           setSearchMessage(
-            `Found ${hits.length} fuzzy matches at ${NATURAL_SEARCH_MIN_PCT}%+ similarity.`,
+            `Found ${enrichedHits.length} fuzzy matches at ${NATURAL_SEARCH_MIN_PCT}%+ similarity.`,
           );
         } else {
           setActiveHitId(null);

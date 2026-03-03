@@ -19,6 +19,10 @@ function buildSnippet(text: string, start: number, length: number) {
   return `${prefix}${text.slice(left, right)}${suffix}`;
 }
 
+function normalizeSnippetWhitespace(value: string) {
+  return value.replace(/\s+/g, " ").trim();
+}
+
 function normalizeForTokenSearch(value: string) {
   return value
     .normalize("NFKC")
@@ -33,12 +37,12 @@ function tokenizeForSearch(value: string) {
 function buildContextSnippet(items: IndexedTextItem[], startIndex: number, endIndex: number) {
   const from = Math.max(0, startIndex - 1);
   const to = Math.min(items.length - 1, endIndex + 1);
-  return items
-    .slice(from, to + 1)
-    .map((item) => item.text)
-    .join(" ")
-    .replace(/\s+/g, " ")
-    .trim();
+  return normalizeSnippetWhitespace(
+    items
+      .slice(from, to + 1)
+      .map((item) => item.text)
+      .join(" "),
+  );
 }
 
 function buildTopLines(items: IndexedTextItem[]) {
@@ -194,6 +198,102 @@ function areItemsLikelyContinuousToken(previous: IndexedTextItem, current: Index
 
   // Allow tiny overlap/kerning and small positive gaps for split glyph runs.
   return gap >= -height * 0.8 && gap <= height * 1.2;
+}
+
+type ScoredSnippet = {
+  score: number;
+  snippet: string;
+};
+
+function scoreSnippetCandidate(text: string, queryLower: string, queryTokens: string[]): ScoredSnippet | null {
+  const normalizedText = normalizeSnippetWhitespace(text);
+  if (!normalizedText) {
+    return null;
+  }
+
+  const lowerText = normalizedText.toLowerCase();
+  const phraseIndex = queryLower ? lowerText.indexOf(queryLower) : -1;
+  if (phraseIndex >= 0) {
+    return {
+      score: 10_000 + queryLower.length,
+      snippet: buildSnippet(normalizedText, phraseIndex, queryLower.length),
+    };
+  }
+
+  let tokenScore = 0;
+  let firstHitIndex = Number.POSITIVE_INFINITY;
+  let firstHitLength = 0;
+
+  for (const token of queryTokens) {
+    if (token.length < 2) {
+      continue;
+    }
+
+    const tokenIndex = lowerText.indexOf(token);
+    if (tokenIndex === -1) {
+      continue;
+    }
+
+    tokenScore += Math.min(token.length, 16);
+
+    if (tokenIndex < firstHitIndex) {
+      firstHitIndex = tokenIndex;
+      firstHitLength = token.length;
+    }
+  }
+
+  if (tokenScore === 0 || !Number.isFinite(firstHitIndex)) {
+    return null;
+  }
+
+  return {
+    score: tokenScore,
+    snippet: buildSnippet(normalizedText, firstHitIndex, Math.max(firstHitLength, 2)),
+  };
+}
+
+export function buildNaturalSnippetForPage(
+  query: string,
+  items: IndexedTextItem[],
+  fallbackSnippet: string,
+) {
+  const queryLower = query.trim().toLowerCase();
+  const queryTokens = tokenizeForSearch(query);
+  if (!queryLower && queryTokens.length === 0) {
+    return normalizeSnippetWhitespace(fallbackSnippet);
+  }
+
+  let best: ScoredSnippet | null = null;
+
+  for (let i = 0; i < items.length; i += 1) {
+    const current = items[i];
+    const oneItem = scoreSnippetCandidate(current.text, queryLower, queryTokens);
+    if (oneItem && (!best || oneItem.score > best.score)) {
+      best = oneItem;
+    }
+
+    const next = items[i + 1];
+    if (!next) {
+      continue;
+    }
+
+    // Catch split text runs (e.g. table cells or line wraps).
+    const twoItems = scoreSnippetCandidate(`${current.text} ${next.text}`, queryLower, queryTokens);
+    if (twoItems && (!best || twoItems.score > best.score)) {
+      best = twoItems;
+    }
+  }
+
+  if (best) {
+    return best.snippet;
+  }
+
+  const cleanedFallback = normalizeSnippetWhitespace(fallbackSnippet);
+  if (cleanedFallback.length <= 180) {
+    return cleanedFallback;
+  }
+
+  return `${cleanedFallback.slice(0, 177).trimEnd()}...`;
 }
 
 export function findExactSearchHits(query: string, pageIndex: Map<number, IndexedTextItem[]>) {
