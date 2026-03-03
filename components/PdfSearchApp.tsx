@@ -68,8 +68,11 @@ export function PdfSearchApp() {
   );
 
   const currentPageHits = useMemo(
-    () => (searchMode === "exact" ? searchHits.filter((hit) => hit.pageNumber === currentPage) : []),
-    [currentPage, searchHits, searchMode],
+    () =>
+      searchHits.filter(
+        (hit) => hit.pageNumber === currentPage && hit.width > 1 && hit.height > 1,
+      ),
+    [currentPage, searchHits],
   );
 
   const renderScale = BASE_RENDER_SCALE;
@@ -358,16 +361,40 @@ export function PdfSearchApp() {
         const payload = (await response.json()) as NaturalSearchPayload;
         const hits = Array.isArray(payload.hits) ? payload.hits : [];
         const snippetByPage = new Map<number, string>();
+        const exactAnchorsByPage = new Map<number, SearchHit[]>();
+        const pageAnchorCursor = new Map<number, number>();
+
         const enrichedHits = hits.map((hit) => {
+          const pageItems = pageIndex.get(hit.pageNumber) ?? [];
+
           if (!snippetByPage.has(hit.pageNumber)) {
-            const pageItems = pageIndex.get(hit.pageNumber) ?? [];
             const naturalSnippet = buildNaturalSnippetForPage(trimmedQuery, pageItems, hit.snippet);
             snippetByPage.set(hit.pageNumber, naturalSnippet);
           }
 
+          if (!exactAnchorsByPage.has(hit.pageNumber)) {
+            const anchors = pageItems.length
+              ? findExactSearchHits(trimmedQuery, new Map([[hit.pageNumber, pageItems]]))
+              : [];
+
+            anchors.sort((a, b) => a.itemIndex - b.itemIndex || a.x - b.x);
+            exactAnchorsByPage.set(hit.pageNumber, anchors);
+          }
+
+          const anchorsForPage = exactAnchorsByPage.get(hit.pageNumber) ?? [];
+          const cursor = pageAnchorCursor.get(hit.pageNumber) ?? 0;
+          const anchor =
+            anchorsForPage.length > 0 ? anchorsForPage[cursor % anchorsForPage.length] : null;
+          pageAnchorCursor.set(hit.pageNumber, cursor + 1);
+
           return {
             ...hit,
-            snippet: snippetByPage.get(hit.pageNumber) ?? hit.snippet,
+            itemIndex: anchor?.itemIndex ?? hit.itemIndex,
+            snippet: anchor?.snippet ?? snippetByPage.get(hit.pageNumber) ?? hit.snippet,
+            x: anchor?.x ?? hit.x,
+            y: anchor?.y ?? hit.y,
+            width: anchor?.width ?? hit.width,
+            height: anchor?.height ?? hit.height,
           };
         });
 
