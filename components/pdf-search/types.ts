@@ -1,4 +1,4 @@
-export type SearchMode = "exact" | "natural";
+export type SearchMode = "exact" | "fuzzy";
 
 export type IndexedTextItem = {
   itemIndex: number;

@@ -76,10 +76,10 @@ export function PdfSearchTopBar({
           </button>
           <button
             type="button"
-            className={searchMode === "natural" ? "active" : ""}
-            onClick={() => onSearchModeChange("natural")}
+            className={searchMode === "fuzzy" ? "active" : ""}
+            onClick={() => onSearchModeChange("fuzzy")}
           >
-            Natural
+            Fuzzy
           </button>
         </div>
 

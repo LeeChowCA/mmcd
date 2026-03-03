@@ -126,7 +126,7 @@ export function PdfSearchResultsPane({
         <h2>
           {searchHits.length} results in {activeSourceLabel}
         </h2>
-        <p>{searchMode === "exact" ? "Keyword Search" : "Natural Similarity Search"}</p>
+        <p>{searchMode === "exact" ? "Keyword Search" : "Fuzzy Similarity Search"}</p>
       </div>
 
       <div className="resultsList">
@@ -141,7 +141,7 @@ export function PdfSearchResultsPane({
               const fileLabel = `${activeSourceLabel} Document`;
               return (
                 <li key={hit.id} className={active ? "active" : ""}>
-                  {searchMode === "natural" ? (
+                  {searchMode === "fuzzy" ? (
                     <div className="resultTop">
                       <span className="matchBadge">{hit.quality}</span>
                     </div>

@@ -23,7 +23,7 @@ import type { IndexedTextItem, SearchHit, SearchMode } from "./pdf-search/types"
 const NATURAL_SEARCH_MIN_PCT = 60;
 const NATURAL_SEARCH_LIMIT = 20;
 
-type NaturalSearchPayload = {
+type FuzzySearchPayload = {
   hits?: SearchHit[];
 };
 
@@ -46,7 +46,7 @@ export function PdfSearchApp() {
   const [searchHits, setSearchHits] = useState<SearchHit[]>([]);
   const [activeHitId, setActiveHitId] = useState<string | null>(null);
   const [searchMessage, setSearchMessage] = useState<string | null>(null);
-  const [searchingNatural, setSearchingNatural] = useState(false);
+  const [searchingFuzzy, setSearchingFuzzy] = useState(false);
   const [printedPageLabels, setPrintedPageLabels] = useState<Map<number, string>>(new Map());
   const [sectionTitlesByPage, setSectionTitlesByPage] = useState<Map<number, string>>(new Map());
 
@@ -332,7 +332,7 @@ export function PdfSearchApp() {
       return;
     }
 
-    if (searchMode === "natural") {
+    if (searchMode === "fuzzy") {
       if (!activeSource) {
         setSearchHits([]);
         setActiveHitId(null);
@@ -340,7 +340,7 @@ export function PdfSearchApp() {
         return;
       }
 
-      setSearchingNatural(true);
+      setSearchingFuzzy(true);
       try {
         const response = await fetch("/api/search", {
           method: "POST",
@@ -356,10 +356,10 @@ export function PdfSearchApp() {
         });
 
         if (!response.ok) {
-          throw new Error("Natural search failed");
+          throw new Error("Fuzzy search failed");
         }
 
-        const payload = (await response.json()) as NaturalSearchPayload;
+        const payload = (await response.json()) as FuzzySearchPayload;
         const hits = Array.isArray(payload.hits) ? payload.hits : [];
         const snippetByPage = new Map<number, string>();
         const exactAnchorsByPage = new Map<number, SearchHit[]>();
@@ -425,9 +425,9 @@ export function PdfSearchApp() {
       } catch {
         setSearchHits([]);
         setActiveHitId(null);
-        setSearchMessage("Natural search is unavailable right now.");
+        setSearchMessage("Fuzzy search is unavailable right now.");
       } finally {
-        setSearchingNatural(false);
+        setSearchingFuzzy(false);
       }
       return;
     }
@@ -504,7 +504,7 @@ export function PdfSearchApp() {
     window.open(activeSource.url, "_blank", "noopener,noreferrer");
   }
 
-  const isBusy = loadingSources || sourceLoading || indexing || searchingNatural;
+  const isBusy = loadingSources || sourceLoading || indexing || searchingFuzzy;
 
   const searchButtonLabel = loadingSources
     ? "Loading sources..."
@@ -512,7 +512,7 @@ export function PdfSearchApp() {
       ? "Loading document..."
       : indexing
         ? "Indexing..."
-        : searchingNatural
+        : searchingFuzzy
           ? "Searching..."
         : "Search";
 
