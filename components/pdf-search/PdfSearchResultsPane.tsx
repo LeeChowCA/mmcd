@@ -46,7 +46,7 @@ export function PdfSearchResultsPane({
         <h2>
           {searchHits.length} results in {activeSourceLabel}
         </h2>
-        <p>{searchMode === "exact" ? "Keyword Search" : "Natural Search (coming soon)"}</p>
+        <p>{searchMode === "exact" ? "Keyword Search" : "Natural Similarity Search"}</p>
       </div>
 
       <div className="resultsList">

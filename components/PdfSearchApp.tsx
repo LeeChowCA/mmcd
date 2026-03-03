@@ -18,6 +18,13 @@ import {
 } from "./pdf-search/searchUtils";
 import type { IndexedTextItem, SearchHit, SearchMode } from "./pdf-search/types";
 
+const NATURAL_SEARCH_MIN_PCT = 60;
+const NATURAL_SEARCH_LIMIT = 20;
+
+type NaturalSearchPayload = {
+  hits?: SearchHit[];
+};
+
 export function PdfSearchApp() {
   const [query, setQuery] = useState("");
   const [searchMode, setSearchMode] = useState<SearchMode>("exact");
@@ -37,6 +44,7 @@ export function PdfSearchApp() {
   const [searchHits, setSearchHits] = useState<SearchHit[]>([]);
   const [activeHitId, setActiveHitId] = useState<string | null>(null);
   const [searchMessage, setSearchMessage] = useState<string | null>(null);
+  const [searchingNatural, setSearchingNatural] = useState(false);
   const [printedPageLabels, setPrintedPageLabels] = useState<Map<number, string>>(new Map());
   const [sectionTitlesByPage, setSectionTitlesByPage] = useState<Map<number, string>>(new Map());
 
@@ -59,8 +67,8 @@ export function PdfSearchApp() {
   );
 
   const currentPageHits = useMemo(
-    () => searchHits.filter((hit) => hit.pageNumber === currentPage),
-    [currentPage, searchHits],
+    () => (searchMode === "exact" ? searchHits.filter((hit) => hit.pageNumber === currentPage) : []),
+    [currentPage, searchHits, searchMode],
   );
 
   const renderScale = BASE_RENDER_SCALE;
@@ -310,15 +318,67 @@ export function PdfSearchApp() {
     }
   }, [activeHitId, currentPage]);
 
-  function executeSearch() {
-    if (searchMode === "natural") {
+  async function executeSearch() {
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery) {
       setSearchHits([]);
       setActiveHitId(null);
-      setSearchMessage("Natural (fuzzy) mode is not implemented yet.");
+      setSearchMessage("Enter a keyword to search.");
       return;
     }
 
-    const hits = findExactSearchHits(query, pageIndex);
+    if (searchMode === "natural") {
+      if (!activeSource) {
+        setSearchHits([]);
+        setActiveHitId(null);
+        setSearchMessage("Choose a source before searching.");
+        return;
+      }
+
+      setSearchingNatural(true);
+      try {
+        const response = await fetch("/api/search", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            query: trimmedQuery,
+            sourceId: activeSource.id,
+            minPct: NATURAL_SEARCH_MIN_PCT,
+            limit: NATURAL_SEARCH_LIMIT,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Natural search failed");
+        }
+
+        const payload = (await response.json()) as NaturalSearchPayload;
+        const hits = Array.isArray(payload.hits) ? payload.hits : [];
+        setSearchHits(hits);
+
+        if (hits.length > 0) {
+          setCurrentPage(hits[0].pageNumber);
+          setActiveHitId(hits[0].id);
+          setSearchMessage(
+            `Found ${hits.length} fuzzy matches at ${NATURAL_SEARCH_MIN_PCT}%+ similarity.`,
+          );
+        } else {
+          setActiveHitId(null);
+          setSearchMessage(`No fuzzy matches found at ${NATURAL_SEARCH_MIN_PCT}%+ similarity.`);
+        }
+      } catch {
+        setSearchHits([]);
+        setActiveHitId(null);
+        setSearchMessage("Natural search is unavailable right now.");
+      } finally {
+        setSearchingNatural(false);
+      }
+      return;
+    }
+
+    const hits = findExactSearchHits(trimmedQuery, pageIndex);
     setSearchHits(hits);
 
     if (hits.length > 0) {
@@ -327,13 +387,13 @@ export function PdfSearchApp() {
       setSearchMessage(`Found ${hits.length} results in ${activeSource?.label ?? "source"}.`);
     } else {
       setActiveHitId(null);
-      setSearchMessage(query.trim() ? "No exact matches found in this source." : "Enter a keyword to search.");
+      setSearchMessage("No exact matches found in this source.");
     }
   }
 
   function onSearchSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    executeSearch();
+    void executeSearch();
   }
 
   function onKeywordKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
@@ -342,7 +402,7 @@ export function PdfSearchApp() {
     }
 
     event.preventDefault();
-    executeSearch();
+    void executeSearch();
   }
 
   function jumpToHit(hit: SearchHit) {
@@ -390,7 +450,7 @@ export function PdfSearchApp() {
     window.open(activeSource.url, "_blank", "noopener,noreferrer");
   }
 
-  const isBusy = loadingSources || sourceLoading || indexing;
+  const isBusy = loadingSources || sourceLoading || indexing || searchingNatural;
 
   const searchButtonLabel = loadingSources
     ? "Loading sources..."
@@ -398,6 +458,8 @@ export function PdfSearchApp() {
       ? "Loading document..."
       : indexing
         ? "Indexing..."
+        : searchingNatural
+          ? "Searching..."
         : "Search";
 
   return (

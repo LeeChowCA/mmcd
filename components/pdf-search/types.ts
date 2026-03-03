@@ -25,6 +25,6 @@ export type SearchHit = {
   y: number;
   width: number;
   height: number;
-  quality: "High Match";
+  quality: string;
   location: HitLocation;
 };
