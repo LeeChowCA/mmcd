@@ -477,6 +477,11 @@ body {
   pointer-events: auto;
 }
 
+.agentWidgetPanel.expanded {
+  width: min(560px, calc(100vw - 2rem));
+  height: min(760px, calc(100vh - 6rem));
+}
+
 .agentWidgetHeader {
   display: flex;
   align-items: flex-start;
@@ -499,19 +504,44 @@ body {
   color: #5a7091;
 }
 
+.agentWidgetHeaderActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.agentWidgetIconButton {
+  border: 1px solid #c6d6eb;
+  background: #ffffff;
+  color: #2f4e7a;
+  width: 1.95rem;
+  height: 1.95rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  padding: 0;
+  border-radius: 0.42rem;
+  cursor: pointer;
+}
+
+.agentWidgetIconButton:hover {
+  background: #edf3ff;
+}
+
 .agentWidgetClose {
-  border: none;
-  background: transparent;
-  font-size: 1rem;
+  border: 1px solid #c6d6eb;
+  background: #ffffff;
+  font-size: 0.9rem;
   line-height: 1;
-  color: #3f567a;
-  padding: 0.25rem;
-  border-radius: 0.4rem;
+  color: #2f4e7a;
+  padding: 0.25rem 0.38rem;
+  border-radius: 0.42rem;
   cursor: pointer;
 }
 
 .agentWidgetClose:hover {
-  background: #e8eef8;
+  background: #edf3ff;
 }
 
 .agentWidgetMessages {
@@ -640,6 +670,7 @@ body {
 .agentWidgetForm textarea:focus,
 .agentWidgetToggle:focus,
 .agentWidgetForm button:focus,
+.agentWidgetIconButton:focus,
 .agentWidgetClose:focus {
   outline: 2px solid #8eb5f4;
   outline-offset: 1px;

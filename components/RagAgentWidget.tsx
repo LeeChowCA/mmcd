@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
@@ -278,6 +278,7 @@ async function streamAgentReply(
 
 export function RagAgentWidget() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [input, setInput] = useState("");
@@ -421,20 +422,66 @@ export function RagAgentWidget() {
         {isOpen ? "Hide Agent" : "Ask Agent"}
       </button>
 
-      <div className={`agentWidgetPanel ${isOpen ? "open" : "closed"}`} aria-hidden={!isOpen}>
+      <div className={`agentWidgetPanel ${isOpen ? "open" : "closed"} ${isExpanded ? "expanded" : ""}`} aria-hidden={!isOpen}>
         <header className="agentWidgetHeader">
           <div>
             <h2>RAG Agent</h2>
             <p>Streaming via `/api/agent/chat/stream`</p>
           </div>
-          <button
-            type="button"
-            className="agentWidgetClose"
-            onClick={() => setIsOpen(false)}
-            aria-label="Close agent panel"
-          >
-            ✕
-          </button>
+          <div className="agentWidgetHeaderActions">
+            <button
+              type="button"
+              className="agentWidgetIconButton"
+              onClick={() => setIsExpanded((current) => !current)}
+              aria-label={isExpanded ? "Collapse agent panel" : "Expand agent panel"}
+              title={isExpanded ? "Collapse" : "Expand"}
+            >
+              {isExpanded ? (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d="M5 5l4 4M19 5l-4 4M5 19l4-4M19 19l-4-4"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M9 9H7M9 9V7M15 9H17M15 9V7M9 15H7M9 15V17M15 15H17M15 15V17"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              ) : (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d="M9 9L5 5M15 9l4-4M9 15l-4 4M15 15l4 4"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M5 5H8M5 5V8M19 5H16M19 5V8M5 19H8M5 19V16M19 19H16M19 19V16"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              )}
+            </button>
+            <button
+              type="button"
+              className="agentWidgetClose"
+              onClick={() => setIsOpen(false)}
+              aria-label="Close agent panel"
+              title="Close"
+            >
+              x
+            </button>
+          </div>
         </header>
 
         <div className="agentWidgetMessages">
@@ -503,3 +550,4 @@ export function RagAgentWidget() {
     </aside>
   );
 }
+
