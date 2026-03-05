@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 
 type JsonBody = Record<string, unknown>;
+const DEFAULT_BACKEND_URL = "http://127.0.0.1:8000/api/ask";
 
 function getBackendUrl() {
-  return process.env.AGENT_BACKEND_URL ?? "";
+  return process.env.AGENT_BACKEND_URL ?? DEFAULT_BACKEND_URL;
 }
 
 function getStreamBackendUrl() {
@@ -65,12 +66,24 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON request body." }, { status: 400 });
   }
 
-  const upstream = await fetch(streamBackendUrl, {
-    method: "POST",
-    headers: createBackendHeaders(),
-    body: JSON.stringify(body),
-    cache: "no-store",
-  });
+  let upstream: Response;
+  try {
+    upstream = await fetch(streamBackendUrl, {
+      method: "POST",
+      headers: createBackendHeaders(),
+      body: JSON.stringify(body),
+      cache: "no-store",
+    });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error: "Unable to reach agent streaming backend.",
+        streamBackendUrl,
+        details: error instanceof Error ? error.message : "Unknown network error",
+      },
+      { status: 502 },
+    );
+  }
 
   if (!upstream.ok) {
     const rawText = await upstream.text();
