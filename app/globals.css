@@ -517,8 +517,10 @@ body {
 .agentWidgetMessages {
   padding: 0.75rem;
   overflow: auto;
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 0.55rem;
+  min-height: 0;
 }
 
 .agentMessage {
@@ -683,6 +685,27 @@ body {
   }
 }
 
+@media (max-width: 900px) {
+  .agentWidget {
+    right: 0.75rem;
+    left: 0.75rem;
+    justify-items: stretch;
+  }
+
+  .agentWidgetPanel {
+    inset: 0;
+    width: auto;
+    height: auto;
+    max-height: none;
+    border-radius: 0;
+    border: none;
+  }
+
+  .agentWidgetToggle {
+    justify-self: end;
+  }
+}
+
 @media (max-width: 760px) {
   .appShell {
     height: auto;
@@ -728,25 +751,5 @@ body {
   .viewerStatus {
     text-align: left;
     max-width: none;
-  }
-
-  .agentWidget {
-    right: 0.75rem;
-    left: 0.75rem;
-    justify-items: stretch;
-  }
-
-  .agentWidgetPanel {
-    right: 0;
-    bottom: 0;
-    width: 100vw;
-    height: 100dvh;
-    max-height: 100dvh;
-    border-radius: 0;
-    border: none;
-  }
-
-  .agentWidgetToggle {
-    justify-self: end;
   }
 }
