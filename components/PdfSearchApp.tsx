@@ -6,6 +6,7 @@ import type { DocumentSource } from "@/lib/documentSources";
 import { PdfSearchResultsPane } from "./pdf-search/PdfSearchResultsPane";
 import { PdfSearchTopBar } from "./pdf-search/PdfSearchTopBar";
 import { PdfSearchViewerPane } from "./pdf-search/PdfSearchViewerPane";
+import { RagAgentWidget } from "./RagAgentWidget";
 import {
   BASE_RENDER_SCALE,
   MAX_ZOOM,
@@ -576,6 +577,8 @@ export function PdfSearchApp() {
           activeHitPrintedPageLabel={activeHitPrintedPageLabel}
         />
       </section>
+
+      <RagAgentWidget />
     </main>
   );
 }
