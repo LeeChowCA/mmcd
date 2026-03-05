@@ -455,24 +455,24 @@ body {
   grid-template-rows: auto minmax(0, 1fr) auto auto;
   overflow: hidden;
   opacity: 1;
-  visibility: visible;
   transform: translateY(0) scale(1);
+  transform-origin: bottom right;
+  will-change: opacity, transform, width, height;
   transition:
     opacity 140ms ease,
     transform 160ms ease,
-    visibility 140ms ease;
+    width 220ms ease,
+    height 220ms ease;
 }
 
 .agentWidgetPanel.closed {
   opacity: 0;
-  visibility: hidden;
   transform: translateY(10px) scale(0.98);
   pointer-events: none;
 }
 
 .agentWidgetPanel.open {
   opacity: 1;
-  visibility: visible;
   transform: translateY(0) scale(1);
   pointer-events: auto;
 }
