@@ -19,6 +19,7 @@ type ChatMessage = {
   createdAt: number;
   status?: "streaming" | "done" | "error";
   citations?: Citation[];
+  suggestedQuestions?: string[];
 };
 
 type AgentResponse =
@@ -29,6 +30,8 @@ type AgentResponse =
       output?: unknown;
       message?: unknown;
       citations?: unknown;
+      suggested_questions?: unknown;
+      suggestedQuestions?: unknown;
       messages?: Array<{ role?: unknown; content?: unknown; citations?: unknown }>;
     };
 
@@ -43,6 +46,8 @@ type StreamEvent = {
   output?: unknown;
   message?: unknown;
   citations?: unknown;
+  suggested_questions?: unknown;
+  suggestedQuestions?: unknown;
 };
 
 const STARTER_HEADLINE = "What can I break down for you?";
@@ -118,6 +123,19 @@ function parseCitations(value: unknown): Citation[] | undefined {
   return parsed.length > 0 ? parsed : undefined;
 }
 
+function parseSuggestedQuestions(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
+
+  const parsed = value
+    .map((entry) => normalizeMessageContent(entry).trim())
+    .filter(Boolean)
+    .slice(0, 4);
+
+  return parsed.length > 0 ? parsed : undefined;
+}
+
 function extractAssistantText(payload: AgentResponse): string {
   if (typeof payload === "string") {
     return payload.trim();
@@ -163,6 +181,112 @@ function extractAssistantCitations(payload: AgentResponse): Citation[] | undefin
   }
 
   return parseCitations(assistantFromMessages.citations);
+}
+
+function extractSuggestedQuestions(payload: AgentResponse): string[] | undefined {
+  if (typeof payload === "string") {
+    return undefined;
+  }
+
+  return parseSuggestedQuestions(payload.suggested_questions ?? payload.suggestedQuestions);
+}
+
+function formatCitationLabel(citation: Citation) {
+  const base = (citation.label || "").trim();
+  if (base) {
+    return base.length > 28 ? `${base.slice(0, 27)}...` : base;
+  }
+
+  if (citation.url) {
+    try {
+      const url = new URL(citation.url);
+      const leaf = decodeURIComponent(url.pathname.split("/").filter(Boolean).pop() || "").trim();
+      if (leaf) {
+        return leaf.length > 18 ? `${leaf.slice(0, 17)}...` : leaf;
+      }
+      return url.hostname.replace(/^www\./, "") || `Source ${citation.id}`;
+    } catch {
+      return `Source ${citation.id}`;
+    }
+  }
+
+  return `Source ${citation.id}`;
+}
+
+function renderAssistantContent(content: string, citations?: Citation[]) {
+  const citationMap = new Map<number, Citation>();
+  for (const citation of citations ?? []) {
+    citationMap.set(citation.id, citation);
+  }
+
+  const segments = content.split(/(\[\d{1,3}\])/g);
+  const hasCitationTokens = segments.some((segment) => /^\[\d{1,3}\]$/.test(segment));
+
+  const rendered = (
+    <>
+      {segments.map((segment, index) => {
+        const match = segment.match(/^\[(\d{1,3})\]$/);
+        if (match) {
+          const citation = citationMap.get(Number(match[1]));
+          if (citation?.url) {
+            return (
+              <a
+                key={`${segment}-${index}`}
+                className="agentCitationPill"
+                href={citation.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                title={citation.url}
+              >
+                {segment}
+              </a>
+            );
+          }
+        }
+
+        return <span key={`${segment}-${index}`}>{segment}</span>;
+      })}
+    </>
+  );
+
+  if (hasCitationTokens) {
+    return rendered;
+  }
+
+  if (!citations || citations.length === 0) {
+    return rendered;
+  }
+
+  return (
+    <>
+      {rendered}
+      <span className="agentCitationList">
+        {citations.map((citation) =>
+          citation.url ? (
+            <a
+              key={`${citation.id}-${citation.url}`}
+              className="agentCitationPill"
+              href={citation.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={citation.url}
+            >
+              {formatCitationLabel(citation)}
+            </a>
+          ) : null,
+        )}
+      </span>
+    </>
+  );
+}
+
+function buildFallbackSuggestedQuestions(question: string) {
+  const topic = question.replace(/\s+/g, " ").trim();
+  return [
+    `Can you point me to the exact section and page for "${topic}"?`,
+    `Can you summarize the requirement for "${topic}" in plain language?`,
+    `Are there related MMCD sections I should also review for "${topic}"?`,
+  ];
 }
 
 function createMessage(role: ChatRole, content: string): ChatMessage {
@@ -232,7 +356,7 @@ function getLastAssistantMessageId(messages: ChatMessage[]) {
 
 async function streamAgentReply(
   requestBody: unknown,
-  onDelta: (deltaText: string, citations?: Citation[]) => void,
+  onEvent: (payload: { deltaText?: string; citations?: Citation[]; suggestedQuestions?: string[] }) => void,
 ) {
   const response = await fetch("/api/agent/chat/stream", {
     method: "POST",
@@ -258,6 +382,7 @@ async function streamAgentReply(
 
   const emitFromEvent = (event: StreamEvent) => {
     const citations = parseCitations(event.citations);
+    const suggestedQuestions = parseSuggestedQuestions(event.suggested_questions ?? event.suggestedQuestions);
     const eventType = String(event.event ?? event.type ?? "").toLowerCase();
     const delta =
       normalizeMessageContent(event.delta) ||
@@ -267,7 +392,7 @@ async function streamAgentReply(
 
     if (delta) {
       assembled += delta;
-      onDelta(delta, citations);
+      onEvent({ deltaText: delta, citations, suggestedQuestions });
       return;
     }
 
@@ -280,15 +405,15 @@ async function streamAgentReply(
         const extra = final.startsWith(assembled) ? final.slice(assembled.length) : final;
         assembled = final;
         if (extra) {
-          onDelta(extra, citations);
-        } else if (citations) {
-          onDelta("", citations);
+          onEvent({ deltaText: extra, citations, suggestedQuestions });
+        } else if (citations || suggestedQuestions) {
+          onEvent({ citations, suggestedQuestions });
         }
-      } else if (citations) {
-        onDelta("", citations);
+      } else if (citations || suggestedQuestions) {
+        onEvent({ citations, suggestedQuestions });
       }
-    } else if (citations) {
-      onDelta("", citations);
+    } else if (citations || suggestedQuestions) {
+      onEvent({ citations, suggestedQuestions });
     }
   };
 
@@ -317,7 +442,7 @@ async function streamAgentReply(
         emitFromEvent(JSON.parse(payloadLine) as StreamEvent);
       } catch {
         assembled += payloadLine;
-        onDelta(payloadLine);
+        onEvent({ deltaText: payloadLine });
       }
     }
   }
@@ -330,7 +455,7 @@ async function streamAgentReply(
         emitFromEvent(JSON.parse(tailPayload) as StreamEvent);
       } catch {
         assembled += tailPayload;
-        onDelta(tailPayload);
+        onEvent({ deltaText: tailPayload });
       }
     }
   }
@@ -419,7 +544,7 @@ export function RagAgentWidget() {
     };
 
     try {
-      await streamAgentReply(requestBody, (deltaText, citations) => {
+      await streamAgentReply(requestBody, ({ deltaText = "", citations, suggestedQuestions }) => {
         setThinkingStepIndex((current) => Math.max(current, 3));
         setMessages((current) =>
           current.map((message) =>
@@ -428,6 +553,7 @@ export function RagAgentWidget() {
                   ...message,
                   content: `${message.content}${deltaText}`,
                   citations: citations ?? message.citations,
+                  suggestedQuestions: suggestedQuestions ?? message.suggestedQuestions,
                   status: "streaming",
                 }
               : message,
@@ -441,6 +567,8 @@ export function RagAgentWidget() {
             ? {
                 ...message,
                 content: message.content || "The agent returned an empty response.",
+                suggestedQuestions:
+                  message.suggestedQuestions ?? buildFallbackSuggestedQuestions(trimmed),
                 status: "done",
               }
             : message,
@@ -470,17 +598,20 @@ export function RagAgentWidget() {
 
         const assistantReply = extractAssistantText(payload);
         const citations = extractAssistantCitations(payload);
+        const suggestedQuestions = extractSuggestedQuestions(payload);
         setThinkingStepIndex(THOUGHT_STEPS.length - 1);
         setMessages((current) =>
           current.map((message) =>
             message.id === assistantMessage.id
-              ? {
-                  ...message,
-                  content: assistantReply || "The agent returned an empty response.",
-                  citations,
-                  status: "done",
-                }
-              : message,
+                ? {
+                    ...message,
+                    content: assistantReply || "The agent returned an empty response.",
+                    citations,
+                    suggestedQuestions:
+                      suggestedQuestions ?? buildFallbackSuggestedQuestions(trimmed),
+                    status: "done",
+                  }
+                : message,
           ),
         );
       } catch (submitError) {
@@ -661,7 +792,7 @@ export function RagAgentWidget() {
                       <p>{message.content}</p>
                     </div>
                   ) : (
-                    <p className="agentAssistantText">{message.content}</p>
+                    <div className="agentAssistantText">{renderAssistantContent(message.content, message.citations)}</div>
                   )}
 
                   <div className="agentMessageFooter">
@@ -717,6 +848,29 @@ export function RagAgentWidget() {
                   </div>
                 </div>
               </article>
+
+              {message.role === "assistant" &&
+              message.status === "done" &&
+              message.id === lastAssistantMessageId &&
+              (message.suggestedQuestions?.length ?? 0) > 0 ? (
+                <div className="agentFollowUpBlock">
+                  <div className="agentFollowUpDivider" />
+                  <p className="agentFollowUpLabel">You might also ask:</p>
+                  <div className="agentFollowUpChips">
+                    {message.suggestedQuestions?.map((question) => (
+                      <button
+                        key={question}
+                        type="button"
+                        className="agentFollowUpChip"
+                        onClick={() => void submitQuestion(question)}
+                        disabled={isSending}
+                      >
+                        {question}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </div>
           ))}
 
