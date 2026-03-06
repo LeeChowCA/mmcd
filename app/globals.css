@@ -622,7 +622,7 @@ body {
 .agentMessageGroup {
   display: grid;
   gap: 6px;
-  padding: 0 8px;
+  padding: 0;
   min-width: 0;
   width: 100%;
 }
@@ -756,8 +756,8 @@ body {
   padding: 12px 16px;
   white-space: pre-wrap;
   word-break: break-word;
-  width: min(100%, 31rem);
-  max-width: calc(100% - 72px);
+  width: 100%;
+  max-width: 100%;
 }
 
 .agentAssistantText p {
@@ -814,8 +814,8 @@ body {
 .agentFollowUpBlock {
   margin-left: 16px;
   margin-right: auto;
-  width: min(100%, 320px);
-  max-width: calc(100% - 72px);
+  width: calc(100% - 16px);
+  max-width: 100%;
   display: grid;
   gap: 10px;
 }
@@ -1101,8 +1101,8 @@ body {
 
   .agentAssistantText {
     padding: 8px 10px;
-    width: min(100%, 100%);
-    max-width: calc(100% - 32px);
+    width: 100%;
+    max-width: 100%;
   }
 
   .agentMessageFooter {
@@ -1128,8 +1128,8 @@ body {
 
   .agentFollowUpBlock {
     margin-left: 10px;
-    width: calc(100% - 20px);
-    max-width: calc(100% - 20px);
+    width: calc(100% - 10px);
+    max-width: 100%;
     gap: 8px;
   }
 
