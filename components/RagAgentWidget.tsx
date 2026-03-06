@@ -1,5 +1,6 @@
-﻿"use client";
+"use client";
 
+import Image from "next/image";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
 type ChatRole = "user" | "assistant";
@@ -15,6 +16,7 @@ type ChatMessage = {
   id: string;
   role: ChatRole;
   content: string;
+  createdAt: number;
   status?: "streaming" | "done" | "error";
   citations?: Citation[];
 };
@@ -42,6 +44,24 @@ type StreamEvent = {
   message?: unknown;
   citations?: unknown;
 };
+
+const STARTER_HEADLINE = "What can I break down for you?";
+
+const RECOMMENDED_QUESTIONS = [
+  "What are the key contractor obligations in SGC?",
+  "Where is the approved materials list for roadway lighting?",
+  "Summarize start-up, testing and commissioning requirements.",
+  "What sections cover sanitary sewers and related requirements?",
+  "Find the requirements for pre-testing and commissioning.",
+];
+
+const THOUGHT_STEPS = [
+  "Breaking down your question",
+  "Finding relevant sections",
+  "Reading sources",
+  "Drafting response",
+  "Finalizing",
+];
 
 function normalizeMessageContent(value: unknown): string {
   if (typeof value === "string") {
@@ -98,16 +118,6 @@ function parseCitations(value: unknown): Citation[] | undefined {
   return parsed.length > 0 ? parsed : undefined;
 }
 
-function citationLabel(citation: Citation, index: number) {
-  if (typeof citation.page === "number") {
-    return `p.${citation.page}`;
-  }
-  if (citation.label) {
-    return citation.label.length > 18 ? `${citation.label.slice(0, 17)}...` : citation.label;
-  }
-  return `source ${index + 1}`;
-}
-
 function extractAssistantText(payload: AgentResponse): string {
   if (typeof payload === "string") {
     return payload.trim();
@@ -160,6 +170,7 @@ function createMessage(role: ChatRole, content: string): ChatMessage {
     id: `${role}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     role,
     content,
+    createdAt: Date.now(),
   };
 }
 
@@ -168,6 +179,55 @@ function toReadableError(payload: AgentResponse, fallback: string) {
     return payload.trim() || fallback;
   }
   return normalizeMessageContent(payload) || fallback;
+}
+
+function formatMessageTime(timestamp: number) {
+  return new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(timestamp));
+}
+
+function formatConversationDate(timestamp: number) {
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+  })
+    .format(new Date(timestamp))
+    .replace(".", "")
+    .toUpperCase();
+}
+
+function buildConversationTitle(messages: ChatMessage[]) {
+  const firstUserMessage = messages.find((message) => message.role === "user");
+  if (!firstUserMessage) {
+    return "Chat 4";
+  }
+
+  const normalized = firstUserMessage.content.replace(/\s+/g, " ").trim();
+  const firstBreak = normalized.search(/[.!?\n]/);
+  const sentence = firstBreak !== -1 ? normalized.slice(0, firstBreak) : normalized;
+  return (sentence || normalized).trim();
+}
+
+function shouldShowDate(messages: ChatMessage[], index: number) {
+  if (index === 0) {
+    return true;
+  }
+
+  const currentDay = new Date(messages[index].createdAt).toDateString();
+  const previousDay = new Date(messages[index - 1].createdAt).toDateString();
+  return currentDay !== previousDay;
+}
+
+function getLastAssistantMessageId(messages: ChatMessage[]) {
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    if (messages[index].role === "assistant") {
+      return messages[index].id;
+    }
+  }
+  return null;
 }
 
 async function streamAgentReply(
@@ -280,55 +340,87 @@ export function RagAgentWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [input, setInput] = useState("");
+  const [thinkingStepIndex, setThinkingStepIndex] = useState(0);
+  const [thinkingElapsedSec, setThinkingElapsedSec] = useState(0);
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    createMessage(
-      "assistant",
-      "RAG Agent is ready. Ask a question about the selected MMCD document.",
-    ),
-  ]);
 
-  const placeholder = useMemo(
-    () => (isSending ? "Waiting for agent response..." : "Ask your LangGraph RAG agent..."),
-    [isSending],
+  const visibleMessages = useMemo(
+    () =>
+      messages.filter(
+        (message) =>
+          !(message.role === "assistant" && message.status === "streaming" && message.content.trim().length === 0) &&
+          !(message.role === "assistant" && message.content.trim() === STARTER_HEADLINE),
+      ),
+    [messages],
   );
+  const isStarterState = visibleMessages.length === 0 && !isSending;
+  const conversationTitle = useMemo(() => buildConversationTitle(visibleMessages), [visibleMessages]);
+  const thinkingStep = THOUGHT_STEPS[Math.min(thinkingStepIndex, THOUGHT_STEPS.length - 1)];
+  const thinkingProgressPct = Math.round(
+    ((Math.min(thinkingStepIndex, THOUGHT_STEPS.length - 1) + 1) / THOUGHT_STEPS.length) * 100,
+  );
+  const lastAssistantMessageId = useMemo(() => getLastAssistantMessageId(visibleMessages), [visibleMessages]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages, isOpen]);
+  }, [visibleMessages, isOpen, isSending]);
 
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const trimmed = input.trim();
+  useEffect(() => {
+    if (!copiedMessageId) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => setCopiedMessageId(null), 1400);
+    return () => window.clearTimeout(timer);
+  }, [copiedMessageId]);
+
+  useEffect(() => {
+    if (!isSending) {
+      return;
+    }
+
+    setThinkingElapsedSec(0);
+    setThinkingStepIndex(0);
+
+    const timer = window.setInterval(() => {
+      setThinkingElapsedSec((current) => current + 1);
+      setThinkingStepIndex((current) => Math.min(current + 1, THOUGHT_STEPS.length - 1));
+    }, 1100);
+
+    return () => window.clearInterval(timer);
+  }, [isSending]);
+
+  async function submitQuestion(rawQuestion: string) {
+    const trimmed = rawQuestion.trim();
     if (!trimmed || isSending) {
       return;
     }
 
     const userMessage = createMessage("user", trimmed);
-    const assistantMessage = {
+    const assistantMessage: ChatMessage = {
       ...createMessage("assistant", ""),
-      status: "streaming" as const,
+      status: "streaming",
     };
     const nextMessages = [...messages, userMessage, assistantMessage];
+
     setMessages(nextMessages);
     setInput("");
-    setError(null);
     setIsSending(true);
     setIsOpen(true);
 
     const requestBody = {
-      messages: nextMessages
-        .filter((message) => message.role === "user" || message.role === "assistant")
-        .map((message) => ({
-          role: message.role,
-          content: message.content,
-        })),
+      messages: nextMessages.map((message) => ({
+        role: message.role,
+        content: message.content,
+      })),
     };
 
     try {
       await streamAgentReply(requestBody, (deltaText, citations) => {
+        setThinkingStepIndex((current) => Math.max(current, 3));
         setMessages((current) =>
           current.map((message) =>
             message.id === assistantMessage.id
@@ -378,12 +470,13 @@ export function RagAgentWidget() {
 
         const assistantReply = extractAssistantText(payload);
         const citations = extractAssistantCitations(payload);
+        setThinkingStepIndex(THOUGHT_STEPS.length - 1);
         setMessages((current) =>
           current.map((message) =>
             message.id === assistantMessage.id
               ? {
                   ...message,
-                  content: assistantReply,
+                  content: assistantReply || "The agent returned an empty response.",
                   citations,
                   status: "done",
                 }
@@ -393,51 +486,87 @@ export function RagAgentWidget() {
       } catch (submitError) {
         const message =
           submitError instanceof Error ? submitError.message : "Unable to reach agent backend.";
+        console.error("Agent request failed", message);
         setMessages((current) =>
           current.map((entry) =>
             entry.id === assistantMessage.id
               ? {
                   ...entry,
-                  content: "I couldn't reach the agent backend just now. Please try again.",
+                  content: `I noted your question: "${trimmed}", but the remote agent isn't reachable right now. Please try again once it's back online.`,
                   status: "error",
                 }
               : entry,
           ),
         );
-        setError(message);
       }
     } finally {
       setIsSending(false);
     }
   }
 
+  async function onSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await submitQuestion(input);
+  }
+
+  function copyMessage(message: ChatMessage) {
+    if (!navigator?.clipboard) {
+      return;
+    }
+
+    void navigator.clipboard.writeText(message.content).then(() => {
+      setCopiedMessageId(message.id);
+    });
+  }
+
   return (
     <aside className="agentWidget">
-      <button
-        type="button"
-        className="agentWidgetToggle"
-        onClick={() => setIsOpen((current) => !current)}
-        aria-expanded={isOpen}
-      >
-        {isOpen ? "Hide Agent" : "Ask Agent"}
-      </button>
+      {!isOpen ? (
+        <button
+          type="button"
+          className="agentWidgetToggle"
+          onClick={() => setIsOpen(true)}
+          aria-expanded={isOpen}
+        >
+          Ask Agent
+        </button>
+      ) : null}
 
-      <div className={`agentWidgetPanel ${isOpen ? "open" : "closed"} ${isExpanded ? "expanded" : ""}`} aria-hidden={!isOpen}>
+      <div
+        className={`agentWidgetPanel ${isOpen ? "open" : "closed"} ${isExpanded ? "expanded" : ""}`}
+        aria-hidden={!isOpen}
+      >
         <header className="agentWidgetHeader">
-          <div>
-            <h2>RAG Agent</h2>
-            <p>Streaming via `/api/agent/chat/stream`</p>
+          <div className="agentHeaderIdentity">
+            <div className="agentHeaderAvatar" aria-hidden="true">
+              <Image src="/avino_logo.png" alt="" width={36} height={36} />
+            </div>
+            <div className="agentHeaderTitleButton" title={conversationTitle}>
+              <span className="agentHeaderTitleText">{conversationTitle}</span>
+              <span className="agentHeaderCaret" aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M6 9l6 6 6-6"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+            </div>
           </div>
+
           <div className="agentWidgetHeaderActions">
             <button
               type="button"
               className="agentWidgetIconButton"
               onClick={() => setIsExpanded((current) => !current)}
-              aria-label={isExpanded ? "Collapse agent panel" : "Expand agent panel"}
-              title={isExpanded ? "Collapse" : "Expand"}
+              aria-label={isExpanded ? "Collapse chat" : "Expand chat"}
+              title={isExpanded ? "Collapse chat" : "Expand chat"}
             >
               {isExpanded ? (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                   <path
                     d="M5 5l4 4M19 5l-4 4M5 19l4-4M19 19l-4-4"
                     stroke="currentColor"
@@ -454,7 +583,7 @@ export function RagAgentWidget() {
                   />
                 </svg>
               ) : (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                   <path
                     d="M9 9L5 5M15 9l4-4M9 15l-4 4M15 15l4 4"
                     stroke="currentColor"
@@ -472,82 +601,162 @@ export function RagAgentWidget() {
                 </svg>
               )}
             </button>
+
             <button
               type="button"
               className="agentWidgetClose"
-              onClick={() => setIsOpen(false)}
-              aria-label="Close agent panel"
-              title="Close"
+              onClick={() => {
+                setIsOpen(false);
+                setIsExpanded(false);
+              }}
+              aria-label="Close chat"
+              title="Close chat"
             >
-              x
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M6 6l12 12M18 6 6 18"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             </button>
           </div>
         </header>
 
         <div className="agentWidgetMessages">
-          {messages.map((message) => (
-            <article
-              key={message.id}
-              className={`agentMessage ${message.role === "assistant" ? "assistant" : "user"}`}
-            >
-              <div className="agentMessageMeta">
-                <span className="agentMessageRole">{message.role === "assistant" ? "Agent" : "You"}</span>
-                {message.status === "streaming" ? <span className="agentStreamingBadge">Streaming...</span> : null}
-                {message.status === "error" ? <span className="agentErrorBadge">Error</span> : null}
-              </div>
-              <p>{message.content}</p>
+          {isStarterState ? (
+            <section className="agentSuggestedBlock">
+              <h3>{STARTER_HEADLINE}</h3>
+              <ul className="agentSuggestedList">
+                {RECOMMENDED_QUESTIONS.map((question) => (
+                  <li key={question}>
+                    <button
+                      type="button"
+                      className="agentSuggestedChip"
+                      onClick={() => void submitQuestion(question)}
+                      disabled={isSending}
+                    >
+                      {question}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
 
-              {message.role === "assistant" && message.citations && message.citations.length > 0 ? (
-                <div className="agentCitations">
-                  {message.citations.map((citation, index) => {
-                    const label = citationLabel(citation, index);
-                    if (citation.url) {
-                      return (
-                        <a
-                          key={`${message.id}-citation-${citation.id}-${index}`}
-                          href={citation.url}
-                          target="_blank"
-                          rel="noreferrer noopener"
-                          className="agentCitationPill"
-                          title={citation.url}
-                        >
-                          {label}
-                        </a>
-                      );
-                    }
-                    return (
-                      <span
-                        key={`${message.id}-citation-${citation.id}-${index}`}
-                        className="agentCitationPill"
-                        title="Citation"
-                      >
-                        {label}
-                      </span>
-                    );
-                  })}
+          {visibleMessages.map((message, index) => (
+            <div key={message.id} className="agentMessageGroup">
+              {shouldShowDate(visibleMessages, index) ? (
+                <div className="agentDateDivider">
+                  <span>{formatConversationDate(message.createdAt)}</span>
                 </div>
               ) : null}
-            </article>
+
+              <article className={`agentMessage agentMessage--${message.role}`}>
+                <div className="agentMessageBody">
+                  {message.role === "user" ? (
+                    <div className="agentUserBubble">
+                      <p>{message.content}</p>
+                    </div>
+                  ) : (
+                    <p className="agentAssistantText">{message.content}</p>
+                  )}
+
+                  <div className="agentMessageFooter">
+                    <span className="agentMessageTime">{formatMessageTime(message.createdAt)}</span>
+                    <div className="agentMessageActions">
+                      {message.status !== "streaming" ? (
+                        <button
+                          type="button"
+                          className="agentInlineIconButton"
+                          onClick={() => copyMessage(message)}
+                          title={copiedMessageId === message.id ? "Copied" : "Copy"}
+                          aria-label={copiedMessageId === message.id ? "Copied" : "Copy"}
+                        >
+                          {copiedMessageId === message.id ? (
+                            "Copied"
+                          ) : (
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                              <path
+                                d="M9 9h10v10H9zM5 5h10v2H7v8H5z"
+                                stroke="currentColor"
+                                strokeWidth="1.8"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          )}
+                        </button>
+                      ) : null}
+
+                      {message.role === "assistant" &&
+                      message.status === "done" &&
+                      message.id === lastAssistantMessageId ? (
+                        <>
+                          <button
+                            type="button"
+                            className="agentInlineIconButton"
+                            title="Like reply"
+                            aria-label="Like reply"
+                          >
+                            {"\u{1F44D}"}
+                          </button>
+                          <button
+                            type="button"
+                            className="agentInlineIconButton"
+                            title="Dislike reply"
+                            aria-label="Dislike reply"
+                          >
+                            {"\u{1F44E}"}
+                          </button>
+                        </>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              </article>
+            </div>
           ))}
+
+          {isSending ? (
+            <article className="agentThoughtCard" aria-live="polite">
+              <div className="agentThoughtTopRow">
+                <span className="agentThoughtDots" aria-hidden="true">
+                  <span />
+                  <span />
+                  <span />
+                </span>
+                <strong>{thinkingStep}</strong>
+                <span>{`0:${String(thinkingElapsedSec).padStart(2, "0")}`}</span>
+              </div>
+              <div className="agentThoughtProgressTrack" aria-hidden="true">
+                <span className="agentThoughtProgressFill" style={{ width: `${thinkingProgressPct}%` }} />
+              </div>
+              <p>{`Step ${Math.min(thinkingStepIndex + 1, THOUGHT_STEPS.length)}/${THOUGHT_STEPS.length}`}</p>
+            </article>
+          ) : null}
+
           <div ref={messagesEndRef} />
         </div>
-
-        {error ? <p className="agentWidgetError">{error}</p> : null}
 
         <form className="agentWidgetForm" onSubmit={onSubmit}>
           <textarea
             value={input}
             onChange={(event) => setInput(event.target.value)}
-            placeholder={placeholder}
-            rows={3}
+            placeholder="Ask, search, or make anything..."
+            rows={1}
             disabled={isSending}
           />
-          <button type="submit" disabled={isSending || input.trim().length === 0}>
-            {isSending ? "Sending..." : "Send"}
-          </button>
+          <div className="agentWidgetFormFooter">
+            <p className="agentWidgetFormNote">For reference only - AI-generated content.</p>
+            <button type="submit" disabled={isSending || input.trim().length === 0}>
+              {isSending ? "Sending..." : "Send"}
+            </button>
+          </div>
         </form>
       </div>
     </aside>
   );
 }
-
