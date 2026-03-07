@@ -768,7 +768,7 @@ export function RagAgentWidget() {
         <header className="agentWidgetHeader">
           <div className="agentHeaderIdentity">
             <div className="agentHeaderAvatar" aria-hidden="true">
-              <Image src="/avino_logo.png" alt="" width={36} height={36} />
+              <Image src="/scale_technics.png" alt="" width={36} height={36} />
             </div>
             <div className="agentHeaderTitleButton" title={conversationTitle}>
               <span className="agentHeaderTitleText">{conversationTitle}</span>
