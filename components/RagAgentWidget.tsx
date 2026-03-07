@@ -123,14 +123,75 @@ function parseCitations(value: unknown): Citation[] | undefined {
   return parsed.length > 0 ? parsed : undefined;
 }
 
+function shortenSuggestedQuestion(input: string): string {
+  const normalized = input
+    .replace(/\s+/g, " ")
+    .replace(/[??]/g, '"')
+    .replace(/[??]/g, "'")
+    .trim();
+
+  if (!normalized) {
+    return "";
+  }
+
+  const lower = normalized.toLowerCase();
+  if (lower.includes("exact section") || lower.includes("exact page")) {
+    return "Can you show the exact section and page?";
+  }
+  if (lower.includes("plain language") || lower.includes("summarize")) {
+    return "Can you summarize this in plain language?";
+  }
+  if (lower.includes("related") && lower.includes("section")) {
+    return "What related MMCD sections should I review?";
+  }
+  if (lower.includes("what page") || lower.includes("where is")) {
+    return "Where is this covered in the document?";
+  }
+  if (lower.includes("requirements") || lower.includes("requirement")) {
+    return "What are the key requirements here?";
+  }
+
+  const withoutQuotes = normalized.replace(/"[^"]*"/g, "").replace(/\s+/g, " ").trim();
+  const trimmedLead = withoutQuotes
+    .replace(/^please\s+/i, "")
+    .replace(/^could\s+you\s+/i, "Can you ")
+    .replace(/^would\s+you\s+/i, "Can you ")
+    .replace(/^tell me\s+/i, "Can you explain ")
+    .replace(/^show me\s+/i, "Can you show me ")
+    .replace(/^find\s+/i, "Can you find ")
+    .replace(/^list\s+/i, "Can you list ")
+    .trim();
+
+  const baseText = trimmedLead || normalized;
+  const words = baseText.split(/\s+/).filter(Boolean);
+
+  if (words.length < 5) {
+    return "Can you explain this section in more detail?";
+  }
+
+  const cappedWords = words.slice(0, 30);
+  let result = cappedWords.join(" ").replace(/[,.!?;:]+$/, "").trim();
+
+  if (!/^(can|what|where|which|how|is|are|do|does)\b/i.test(result)) {
+    result = `Can you ${result.charAt(0).toLowerCase()}${result.slice(1)}`;
+  }
+
+  if (!result.endsWith("?")) {
+    result = `${result}?`;
+  }
+
+  return result;
+}
+
 function parseSuggestedQuestions(value: unknown): string[] | undefined {
   if (!Array.isArray(value)) {
     return undefined;
   }
 
   const parsed = value
-    .map((entry) => normalizeMessageContent(entry).trim())
+    .map((entry) => shortenSuggestedQuestion(normalizeMessageContent(entry)))
     .filter(Boolean)
+    .filter((entry, index, all) => all.indexOf(entry) === index)
     .slice(0, 4);
 
   return parsed.length > 0 ? parsed : undefined;
@@ -280,12 +341,40 @@ function renderAssistantContent(content: string, citations?: Citation[]) {
   );
 }
 
+function extractQuestionTopic(question: string) {
+  const normalized = question
+    .replace(/\s+/g, " ")
+    .replace(/[?.!]+$/, "")
+    .trim();
+
+  const topic = normalized
+    .replace(/^(can|could|would)\s+you\s+/i, "")
+    .replace(/^please\s+/i, "")
+    .replace(/^what\s+sections?\s+(cover|mention|address)\s+/i, "")
+    .replace(/^which\s+sections?\s+(cover|mention|address)\s+/i, "")
+    .replace(/^where\s+(is|are)\s+/i, "")
+    .replace(/^find\s+/i, "")
+    .replace(/^show\s+me\s+/i, "")
+    .replace(/^summari[sz]e\s+/i, "")
+    .replace(/^explain\s+/i, "")
+    .replace(/^what\s+are\s+the\s+/i, "")
+    .replace(/^(the\s+)?requirements?\s+for\s+/i, "")
+    .replace(/\s+in\s+plain\s+language$/i, "")
+    .replace(/\s+and\s+related\s+requirements$/i, "")
+    .replace(/\s+related\s+requirements$/i, "")
+    .replace(/^the\s+/i, "")
+    .trim();
+
+  const words = topic.split(/\s+/).filter(Boolean).slice(0, 8);
+  return words.length > 0 ? words.join(" ") : "this topic";
+}
+
 function buildFallbackSuggestedQuestions(question: string) {
-  const topic = question.replace(/\s+/g, " ").trim();
+  const topic = extractQuestionTopic(question);
   return [
-    `Can you point me to the exact section and page for "${topic}"?`,
-    `Can you summarize the requirement for "${topic}" in plain language?`,
-    `Are there related MMCD sections I should also review for "${topic}"?`,
+    shortenSuggestedQuestion(`What section and page cover ${topic}?`),
+    shortenSuggestedQuestion(`Can you summarize ${topic} in plain language?`),
+    shortenSuggestedQuestion(`What related MMCD sections mention ${topic}?`),
   ];
 }
 
@@ -488,6 +577,17 @@ export function RagAgentWidget() {
     ((Math.min(thinkingStepIndex, THOUGHT_STEPS.length - 1) + 1) / THOUGHT_STEPS.length) * 100,
   );
   const lastAssistantMessageId = useMemo(() => getLastAssistantMessageId(visibleMessages), [visibleMessages]);
+  const showThinkingCard = useMemo(
+    () =>
+      isSending &&
+      messages.some(
+        (message) =>
+          message.role === "assistant" &&
+          message.status === "streaming" &&
+          message.content.trim().length === 0,
+      ),
+    [isSending, messages],
+  );
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -567,8 +667,7 @@ export function RagAgentWidget() {
             ? {
                 ...message,
                 content: message.content || "The agent returned an empty response.",
-                suggestedQuestions:
-                  message.suggestedQuestions ?? buildFallbackSuggestedQuestions(trimmed),
+                  suggestedQuestions: message.suggestedQuestions ?? buildFallbackSuggestedQuestions(trimmed),
                 status: "done",
               }
             : message,
@@ -607,8 +706,7 @@ export function RagAgentWidget() {
                     ...message,
                     content: assistantReply || "The agent returned an empty response.",
                     citations,
-                    suggestedQuestions:
-                      suggestedQuestions ?? buildFallbackSuggestedQuestions(trimmed),
+                    suggestedQuestions: suggestedQuestions ?? buildFallbackSuggestedQuestions(trimmed),
                     status: "done",
                   }
                 : message,
@@ -874,7 +972,7 @@ export function RagAgentWidget() {
             </div>
           ))}
 
-          {isSending ? (
+          {showThinkingCard ? (
             <article className="agentThoughtCard" aria-live="polite">
               <div className="agentThoughtTopRow">
                 <span className="agentThoughtDots" aria-hidden="true">
