@@ -15,9 +15,13 @@ import {
   toReadableError,
 } from "./rag-agent/helpers";
 import { streamAgentReply } from "./rag-agent/stream";
-import type { AgentResponse, ChatMessage } from "./rag-agent/types";
+import type { AgentResponse, ChatMessage, Citation } from "./rag-agent/types";
 
-export function RagAgentWidget() {
+type RagAgentWidgetProps = {
+  onCitationClick?: (citation: Citation) => void;
+};
+
+export function RagAgentWidget({ onCitationClick }: RagAgentWidgetProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -263,6 +267,9 @@ export function RagAgentWidget() {
           thinkingStep={thinkingStep}
           thinkingStepIndex={thinkingStepIndex}
           visibleMessages={visibleMessages}
+          onCitationClick={(citation) => {
+            onCitationClick?.(citation);
+          }}
           onCopyMessage={copyMessage}
           onSubmitQuestion={(question) => {
             void submitQuestion(question);

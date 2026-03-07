@@ -20,6 +20,7 @@ import {
   isTextItem,
 } from "./pdf-search/searchUtils";
 import type { IndexedTextItem, SearchHit, SearchMode } from "./pdf-search/types";
+import type { Citation } from "./rag-agent/types";
 
 const NATURAL_SEARCH_MIN_PCT = 60;
 const NATURAL_SEARCH_LIMIT = 20;
@@ -27,6 +28,191 @@ const NATURAL_SEARCH_LIMIT = 20;
 type FuzzySearchPayload = {
   hits?: SearchHit[];
 };
+
+function normalizeCitationQuery(value?: string) {
+  if (!value) {
+    return "";
+  }
+
+  return value.replace(/^\.{3}|\.\.\.$/g, "").replace(/\s+/g, " ").trim();
+}
+
+function tokenizeCitationText(value?: string) {
+  return normalizeCitationQuery(value)
+    .toLowerCase()
+    .match(/[a-z0-9]+(?:\.[a-z0-9]+)*/g) ?? [];
+}
+
+function buildCitationExcerptQuery(citation: Citation) {
+  const excerpt = normalizeCitationQuery(citation.excerpt);
+  if (!excerpt) {
+    return "";
+  }
+
+  const matchedText = normalizeCitationQuery(citation.matchedText);
+  if (matchedText) {
+    const lowerExcerpt = excerpt.toLowerCase();
+    const lowerMatch = matchedText.toLowerCase();
+    const matchIndex = lowerExcerpt.indexOf(lowerMatch);
+    if (matchIndex >= 0) {
+      const from = Math.max(0, matchIndex - 48);
+      const to = Math.min(excerpt.length, matchIndex + matchedText.length + 48);
+      return excerpt.slice(from, to).replace(/^\.{3}|\.\.\.$/g, "").trim();
+    }
+  }
+
+  const tokens = excerpt.split(/\s+/).filter(Boolean);
+  if (tokens.length <= 12) {
+    return excerpt;
+  }
+
+  return tokens.slice(0, 12).join(" ");
+}
+
+type CitationQueryCandidate = {
+  text: string;
+  allowFuzzy: boolean;
+};
+
+function buildCitationQueryCandidates(citation: Citation): CitationQueryCandidate[] {
+  const rawCandidates: CitationQueryCandidate[] = [
+    { text: normalizeCitationQuery(citation.matchedText), allowFuzzy: true },
+    { text: buildCitationExcerptQuery(citation), allowFuzzy: true },
+    { text: normalizeCitationQuery(citation.label), allowFuzzy: false },
+  ];
+
+  const seen = new Set<string>();
+  const candidates: CitationQueryCandidate[] = [];
+
+  for (const candidate of rawCandidates) {
+    if (!candidate.text || seen.has(candidate.text)) {
+      continue;
+    }
+    seen.add(candidate.text);
+    candidates.push(candidate);
+  }
+
+  return candidates;
+}
+
+function buildCitationContext(hit: SearchHit, pageItems: IndexedTextItem[]) {
+  const from = Math.max(0, hit.itemIndex - 1);
+  const to = Math.min(pageItems.length - 1, hit.itemIndex + 1);
+  return pageItems
+    .slice(from, to + 1)
+    .map((item) => item.text)
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function scoreCitationHit(hit: SearchHit, citation: Citation, pageItems: IndexedTextItem[]) {
+  const context = `${hit.snippet} ${buildCitationContext(hit, pageItems)}`.trim();
+  const contextText = normalizeCitationQuery(context).toLowerCase();
+  const contextTokens = new Set(tokenizeCitationText(context));
+  let score = 0;
+
+  const matchedText = normalizeCitationQuery(citation.matchedText).toLowerCase();
+  if (matchedText) {
+    if (contextText.includes(matchedText)) {
+      score += 140;
+    } else {
+      for (const token of tokenizeCitationText(matchedText)) {
+        if (contextTokens.has(token)) {
+          score += 28;
+        }
+      }
+    }
+  }
+
+  const excerptTokens = tokenizeCitationText(citation.excerpt);
+  for (const token of excerptTokens) {
+    if (contextTokens.has(token)) {
+      score += 4;
+    }
+  }
+
+  if (/(city of surrey|engineering department|supplementary specifications)/i.test(contextText)) {
+    score -= 90;
+  }
+
+  return score;
+}
+
+function pickBestCitationHit(
+  hits: SearchHit[],
+  citation: Citation,
+  pageItems: IndexedTextItem[],
+  minimumScore = 1,
+) {
+  if (hits.length === 0) {
+    return null;
+  }
+
+  const scored = hits
+    .map((hit) => ({ hit, score: scoreCitationHit(hit, citation, pageItems) }))
+    .filter((entry) => entry.score >= minimumScore)
+    .sort((a, b) => b.score - a.score || a.hit.itemIndex - b.hit.itemIndex);
+
+  return scored[0]?.hit ?? null;
+}
+
+function buildCitationHit(citation: Citation, pageItems: IndexedTextItem[]): SearchHit | null {
+  if (typeof citation.page !== "number" || pageItems.length === 0) {
+    return null;
+  }
+
+  const pageNumber = citation.page;
+  const pageMap = new Map<number, IndexedTextItem[]>([[pageNumber, pageItems]]);
+
+  for (const candidate of buildCitationQueryCandidates(citation)) {
+    const exactHits = findExactSearchHits(candidate.text, pageMap);
+    const bestExactHit = pickBestCitationHit(exactHits, citation, pageItems, 8);
+    if (bestExactHit) {
+      return {
+        ...bestExactHit,
+        id: `citation-${citation.id}-${bestExactHit.id}`,
+        quality: "Citation",
+      };
+    }
+
+    if (!candidate.allowFuzzy) {
+      continue;
+    }
+
+    const fuzzyHits = findNaturalAnchorsForPage(candidate.text, pageItems, pageNumber, 8);
+    const bestFuzzyHit = pickBestCitationHit(fuzzyHits, citation, pageItems, 18);
+    if (bestFuzzyHit) {
+      return {
+        ...bestFuzzyHit,
+        id: `citation-${citation.id}-${bestFuzzyHit.id}`,
+        quality: "Citation",
+      };
+    }
+  }
+
+  const fallbackItem = pageItems.find((item) => item.text.trim());
+  if (!fallbackItem) {
+    return null;
+  }
+
+  return {
+    id: `citation-${citation.id}-${pageNumber}-fallback`,
+    pageNumber,
+    itemIndex: fallbackItem.itemIndex,
+    snippet: citation.excerpt ?? fallbackItem.text,
+    x: fallbackItem.x,
+    y: fallbackItem.y,
+    width: fallbackItem.width,
+    height: fallbackItem.height,
+    quality: "Citation",
+    location: {
+      section: `Page ${pageNumber}`,
+      part: "Citation",
+      clause: `Page ${pageNumber}`,
+    },
+  };
+}
 
 export function PdfSearchApp() {
   const [query, setQuery] = useState("");
@@ -50,6 +236,7 @@ export function PdfSearchApp() {
   const [searchingFuzzy, setSearchingFuzzy] = useState(false);
   const [printedPageLabels, setPrintedPageLabels] = useState<Map<number, string>>(new Map());
   const [sectionTitlesByPage, setSectionTitlesByPage] = useState<Map<number, string>>(new Map());
+  const [citationFocus, setCitationFocus] = useState<Citation | null>(null);
 
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
   const [zoomPercent, setZoomPercent] = useState(100);
@@ -80,10 +267,44 @@ export function PdfSearchApp() {
   const renderScale = BASE_RENDER_SCALE;
   const zoomScale = zoomPercent / 100;
 
-  const activeHitPrintedPageLabel = useMemo(
-    () => (activeHit ? printedPageLabels.get(activeHit.pageNumber) ?? null : null),
-    [activeHit, printedPageLabels],
+  const citationHit = useMemo(() => {
+    if (!citationFocus || !activeSource || typeof citationFocus.page !== "number") {
+      return null;
+    }
+
+    if (citationFocus.sourceId && activeSource.id !== citationFocus.sourceId) {
+      return null;
+    }
+
+    return buildCitationHit(citationFocus, pageIndex.get(citationFocus.page) ?? []);
+  }, [activeSource, citationFocus, pageIndex]);
+
+  const viewerHits = useMemo(() => {
+    if (!citationHit || citationHit.pageNumber !== currentPage) {
+      return currentPageHits;
+    }
+
+    return [citationHit, ...currentPageHits.filter((hit) => hit.id !== citationHit.id)];
+  }, [citationHit, currentPage, currentPageHits]);
+
+  const viewerActiveHitId = citationHit?.id ?? activeHitId;
+  const viewerActiveHit = citationHit ?? activeHit;
+  const viewerActiveHitPrintedPageLabel = useMemo(
+    () =>
+      viewerActiveHit ? printedPageLabels.get(viewerActiveHit.pageNumber) ?? null : null,
+    [printedPageLabels, viewerActiveHit],
   );
+  const viewerSearchMessage = useMemo(() => {
+    if (!citationFocus) {
+      return searchMessage;
+    }
+
+    const label = citationFocus.label ?? citationFocus.sourceFile ?? activeSource?.label ?? "document";
+    if (typeof citationFocus.page === "number") {
+      return `Viewing citation in ${label}, page ${citationFocus.page}.`;
+    }
+    return `Viewing citation in ${label}.`;
+  }, [activeSource?.label, citationFocus, searchMessage]);
 
   useEffect(() => {
     let cancelled = false;
@@ -307,12 +528,12 @@ export function PdfSearchApp() {
   }, [currentPage, pageCount, pdfDoc, renderScale]);
 
   useEffect(() => {
-    if (!activeHitId || !canvasContainerRef.current) {
+    if (!viewerActiveHitId || !canvasContainerRef.current) {
       return;
     }
 
     const activeHighlight = canvasContainerRef.current.querySelector<HTMLElement>(
-      `[data-hit-id="${activeHitId}"]`,
+      `[data-hit-id="${viewerActiveHitId}"]`,
     );
 
     if (activeHighlight) {
@@ -322,10 +543,25 @@ export function PdfSearchApp() {
         inline: "center",
       });
     }
-  }, [activeHitId, currentPage]);
+  }, [viewerActiveHitId, currentPage]);
+
+  useEffect(() => {
+    if (!citationFocus || !activeSource || typeof citationFocus.page !== "number") {
+      return;
+    }
+
+    if (citationFocus.sourceId && activeSource.id !== citationFocus.sourceId) {
+      return;
+    }
+
+    if (currentPage !== citationFocus.page) {
+      setCurrentPage(citationFocus.page);
+    }
+  }, [activeSource, citationFocus, currentPage]);
 
   async function executeSearch() {
     const trimmedQuery = query.trim();
+    setCitationFocus(null);
     if (!trimmedQuery) {
       setSearchHits([]);
       setActiveHitId(null);
@@ -461,15 +697,18 @@ export function PdfSearchApp() {
   }
 
   function jumpToHit(hit: SearchHit) {
+    setCitationFocus(null);
     setCurrentPage(hit.pageNumber);
     setActiveHitId(hit.id);
   }
 
   function previousPage() {
+    setCitationFocus(null);
     setCurrentPage((page) => Math.max(1, page - 1));
   }
 
   function nextPage() {
+    setCitationFocus(null);
     setCurrentPage((page) => Math.min(pageCount, page + 1));
   }
 
@@ -505,6 +744,29 @@ export function PdfSearchApp() {
     window.open(activeSource.url, "_blank", "noopener,noreferrer");
   }
 
+  function onCitationClick(citation: Citation) {
+    const targetSourceId = citation.sourceId?.trim();
+    const sourceExists = targetSourceId
+      ? sources.some((source) => source.id === targetSourceId)
+      : false;
+
+    if (targetSourceId && sourceExists) {
+      if (targetSourceId !== sourceId) {
+        setSourceId(targetSourceId);
+      }
+    } else if (citation.url) {
+      window.open(citation.url, "_blank", "noopener,noreferrer");
+      return;
+    }
+
+    setCitationFocus(citation);
+    setActiveHitId(null);
+
+    if (typeof citation.page === "number") {
+      setCurrentPage(citation.page);
+    }
+  }
+
   const isBusy = loadingSources || sourceLoading || indexing || searchingFuzzy;
 
   const searchButtonLabel = loadingSources
@@ -527,7 +789,10 @@ export function PdfSearchApp() {
         onSearchModeChange={setSearchMode}
         onSearchSubmit={onSearchSubmit}
         sourceId={sourceId}
-        onSourceChange={setSourceId}
+        onSourceChange={(nextSourceId) => {
+          setCitationFocus(null);
+          setSourceId(nextSourceId);
+        }}
         loadingSources={loadingSources}
         sources={sources}
         isSearchDisabled={isBusy || !activeSource}
@@ -551,7 +816,7 @@ export function PdfSearchApp() {
         <PdfSearchViewerPane
           activeSourceLabel={activeSource?.label ?? "No source selected"}
           searchHitsCount={searchHits.length}
-          searchMessage={searchMessage}
+          searchMessage={viewerSearchMessage}
           currentPage={currentPage}
           pageCount={pageCount}
           onPreviousPage={previousPage}
@@ -568,17 +833,17 @@ export function PdfSearchApp() {
           canvasContainerRef={canvasContainerRef}
           canvasRef={canvasRef}
           viewportSize={viewportSize}
-          currentPageHits={currentPageHits}
+          currentPageHits={viewerHits}
           renderScale={renderScale}
           zoomScale={zoomScale}
-          activeHitId={activeHitId}
+          activeHitId={viewerActiveHitId}
           onJumpToHit={jumpToHit}
-          activeHit={activeHit}
-          activeHitPrintedPageLabel={activeHitPrintedPageLabel}
+          activeHit={viewerActiveHit}
+          activeHitPrintedPageLabel={viewerActiveHitPrintedPageLabel}
         />
       </section>
 
-      <RagAgentWidget />
+      <RagAgentWidget onCitationClick={onCitationClick} />
     </main>
   );
 }

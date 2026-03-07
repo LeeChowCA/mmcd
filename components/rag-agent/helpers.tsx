@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import type { AgentResponse, Citation, ChatMessage, ChatRole } from "./types";
 
 export function normalizeMessageContent(value: unknown): string {
@@ -36,20 +36,65 @@ export function parseCitations(value: unknown): Citation[] | undefined {
     const candidate = entry as Record<string, unknown>;
     const numericId = typeof candidate.id === "number" ? candidate.id : index + 1;
     const pageCandidate = candidate.page ?? candidate.page_number ?? candidate.pageNumber;
+    const scoreCandidate = candidate.score;
     const pageNumber =
       typeof pageCandidate === "number" && Number.isFinite(pageCandidate)
         ? Math.max(1, Math.floor(pageCandidate))
         : undefined;
+    const score =
+      typeof scoreCandidate === "number" && Number.isFinite(scoreCandidate)
+        ? scoreCandidate
+        : undefined;
     const url = normalizeMessageContent(candidate.url || candidate.source_url || candidate.href).trim();
+    const sourceFile = normalizeMessageContent(
+      candidate.source_file || candidate.sourceFile || candidate.file_name,
+    ).trim();
+    const rawSourceId = normalizeMessageContent(
+      candidate.source_id || candidate.sourceId,
+    ).trim();
+    const pageId = normalizeMessageContent(candidate.page_id || candidate.pageId).trim();
+    const excerpt = normalizeMessageContent(candidate.excerpt || candidate.snippet).trim();
+    const matchedText = normalizeMessageContent(
+      candidate.matched_text || candidate.matchedText,
+    ).trim();
     const label = normalizeMessageContent(
       candidate.label || candidate.title || candidate.file_name || candidate.source,
     ).trim();
+    let derivedSourceId = rawSourceId;
+
+    if (!derivedSourceId && sourceFile) {
+      derivedSourceId = sourceFile
+        .replace(/\.[^.]+$/, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+    }
+
+    if (!derivedSourceId && url) {
+      try {
+        const parsedUrl = new URL(url, window.location.origin);
+        const leaf = decodeURIComponent(parsedUrl.pathname.split("/").filter(Boolean).pop() || "");
+        derivedSourceId = leaf
+          .replace(/\.[^.]+$/, "")
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "");
+      } catch {
+        derivedSourceId = "";
+      }
+    }
 
     parsed.push({
       id: Number.isFinite(numericId) ? numericId : index + 1,
       url: url || undefined,
       label: label || undefined,
       page: pageNumber,
+      sourceId: derivedSourceId || undefined,
+      pageId: pageId || undefined,
+      sourceFile: sourceFile || undefined,
+      excerpt: excerpt || undefined,
+      matchedText: matchedText || undefined,
+      score,
     });
   }
 
@@ -221,7 +266,171 @@ function formatCitationLabel(citation: Citation) {
   return `Source ${citation.id}`;
 }
 
-export function renderAssistantContent(content: string, citations?: Citation[]): ReactNode {
+function renderHighlightedPreviewText(text: string, matchedText?: string) {
+  if (!matchedText) {
+    return text;
+  }
+
+  const normalizedMatch = matchedText.trim();
+  if (!normalizedMatch) {
+    return text;
+  }
+
+  const escaped = normalizedMatch.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const parts = text.split(new RegExp(`(${escaped})`, "ig"));
+  const hasMatch = parts.some((part) => part.toLowerCase() === normalizedMatch.toLowerCase());
+
+  if (!hasMatch) {
+    return text;
+  }
+
+  return parts.map((part, index) =>
+    part.toLowerCase() === normalizedMatch.toLowerCase() ? <mark key={`${part}-${index}`}>{part}</mark> : part,
+  );
+}
+
+function buildCitationPreviewText(citation: Citation) {
+  if (citation.excerpt?.trim()) {
+    return citation.excerpt.trim();
+  }
+
+  const pageText =
+    typeof citation.page === "number"
+      ? `Page ${citation.page}`
+      : "Referenced section";
+  const label = citation.label?.trim() || citation.sourceFile?.trim() || "Document";
+  return `${label} - ${pageText}`;
+}
+
+function CitationNode({
+  citation,
+  label,
+  onCitationClick,
+}: {
+  citation: Citation;
+  label: string;
+  onCitationClick?: (citation: Citation) => void;
+}) {
+  const wrapperRef = useRef<HTMLSpanElement | null>(null);
+  const previewRef = useRef<HTMLSpanElement | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [previewStyle, setPreviewStyle] = useState<{ left: number; top: number } | null>(null);
+
+  const previewText = buildCitationPreviewText(citation);
+  const previewTitle = citation.label?.trim() || citation.sourceFile?.trim() || `Source ${citation.id}`;
+
+  useLayoutEffect(() => {
+    if (!isOpen || !wrapperRef.current || !previewRef.current) {
+      return;
+    }
+
+    const wrapperRect = wrapperRef.current.getBoundingClientRect();
+    const previewRect = previewRef.current.getBoundingClientRect();
+    const panel =
+      wrapperRef.current.closest(".agentWidgetPanel") ?? wrapperRef.current.closest(".agentWidgetMessages");
+    const panelRect = panel?.getBoundingClientRect();
+
+    if (!panelRect) {
+      setPreviewStyle({ left: 0, top: -previewRect.height - 10 });
+      return;
+    }
+
+    const gutter = 16;
+    const preferredLeft = wrapperRect.left;
+    const minLeft = panelRect.left + gutter;
+    const maxLeft = panelRect.right - gutter - previewRect.width;
+    const clampedLeft = Math.min(Math.max(preferredLeft, minLeft), Math.max(minLeft, maxLeft));
+    const left = clampedLeft - wrapperRect.left;
+
+    const aboveTop = -previewRect.height - 10;
+    const belowTop = wrapperRect.height + 10;
+    const absoluteAboveTop = wrapperRect.top + aboveTop;
+    const top = absoluteAboveTop < panelRect.top + gutter ? belowTop : aboveTop;
+
+    setPreviewStyle({ left, top });
+  }, [isOpen]);
+
+  const openPreview = () => setIsOpen(true);
+  const closePreview = () => setIsOpen(false);
+
+  if (!onCitationClick) {
+    if (citation.url) {
+      return (
+        <a
+          className="agentCitationPill"
+          href={citation.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          title={citation.url}
+        >
+          {label}
+        </a>
+      );
+    }
+
+    return <span className="agentCitationPill">{label}</span>;
+  }
+
+  return (
+    <span
+      ref={wrapperRef}
+      className={`agentCitationWrapper ${isOpen ? "is-open" : ""}`}
+      onMouseEnter={openPreview}
+      onMouseLeave={closePreview}
+      onFocusCapture={openPreview}
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+          closePreview();
+        }
+      }}
+    >
+      <button
+        type="button"
+        className="agentCitationPill agentCitationButton"
+        onClick={() => onCitationClick(citation)}
+        title={typeof citation.page === "number" ? `${previewTitle} - page ${citation.page}` : previewTitle}
+      >
+        {label}
+      </button>
+      <span
+        ref={previewRef}
+        className="agentCitationPreview"
+        role="tooltip"
+        style={
+          previewStyle
+            ? {
+                left: `${previewStyle.left}px`,
+                top: `${previewStyle.top}px`,
+              }
+            : undefined
+        }
+      >
+        <strong className="agentCitationPreviewTitle">
+          {previewTitle}
+          {typeof citation.page === "number" ? ` - p.${citation.page}` : ""}
+        </strong>
+        <span className="agentCitationPreviewText">
+          {renderHighlightedPreviewText(previewText, citation.matchedText)}
+        </span>
+      </span>
+    </span>
+  );
+}
+
+function renderCitationNode(
+  citation: Citation,
+  label: string,
+  key: string,
+  onCitationClick?: (citation: Citation) => void,
+) {
+  return <CitationNode key={key} citation={citation} label={label} onCitationClick={onCitationClick} />;
+}
+
+export function renderAssistantContent(
+  content: string,
+  citations?: Citation[],
+  onCitationClick?: (citation: Citation) => void,
+): ReactNode {
   const citationMap = new Map<number, Citation>();
   for (const citation of citations ?? []) {
     citationMap.set(citation.id, citation);
@@ -236,19 +445,8 @@ export function renderAssistantContent(content: string, citations?: Citation[]):
         const match = segment.match(/^\[(\d{1,3})\]$/);
         if (match) {
           const citation = citationMap.get(Number(match[1]));
-          if (citation?.url) {
-            return (
-              <a
-                key={`${segment}-${index}`}
-                className="agentCitationPill"
-                href={citation.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                title={citation.url}
-              >
-                {segment}
-              </a>
-            );
+          if (citation) {
+            return renderCitationNode(citation, segment, `${segment}-${index}`, onCitationClick);
           }
         }
 
@@ -266,18 +464,12 @@ export function renderAssistantContent(content: string, citations?: Citation[]):
       {rendered}
       <span className="agentCitationList">
         {citations.map((citation) =>
-          citation.url ? (
-            <a
-              key={`${citation.id}-${citation.url}`}
-              className="agentCitationPill"
-              href={citation.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              title={citation.url}
-            >
-              {formatCitationLabel(citation)}
-            </a>
-          ) : null,
+          renderCitationNode(
+            citation,
+            formatCitationLabel(citation),
+            `${citation.id}-${citation.url || citation.label || citation.page || "citation"}`,
+            onCitationClick,
+          ),
         )}
       </span>
     </>

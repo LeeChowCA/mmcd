@@ -6,7 +6,7 @@ import {
   renderAssistantContent,
   shouldShowDate,
 } from "./helpers";
-import type { ChatMessage } from "./types";
+import type { ChatMessage, Citation } from "./types";
 
 type AgentWidgetMessagesProps = {
   copiedMessageId: string | null;
@@ -20,6 +20,7 @@ type AgentWidgetMessagesProps = {
   thinkingStep: string;
   thinkingStepIndex: number;
   visibleMessages: ChatMessage[];
+  onCitationClick: (citation: Citation) => void;
   onCopyMessage: (message: ChatMessage) => void;
   onSubmitQuestion: (question: string) => void;
 };
@@ -58,6 +59,7 @@ type AgentMessageItemProps = {
   lastAssistantMessageId: string | null;
   message: ChatMessage;
   visibleMessages: ChatMessage[];
+  onCitationClick: (citation: Citation) => void;
   onCopyMessage: (message: ChatMessage) => void;
   onSubmitQuestion: (question: string) => void;
 };
@@ -69,6 +71,7 @@ function AgentMessageItem({
   lastAssistantMessageId,
   message,
   visibleMessages,
+  onCitationClick,
   onCopyMessage,
   onSubmitQuestion,
 }: AgentMessageItemProps) {
@@ -88,7 +91,7 @@ function AgentMessageItem({
             </div>
           ) : (
             <div className="agentAssistantText">
-              {renderAssistantContent(message.content, message.citations)}
+              {renderAssistantContent(message.content, message.citations, onCitationClick)}
             </div>
           )}
 
@@ -216,6 +219,7 @@ export function AgentWidgetMessages({
   thinkingStep,
   thinkingStepIndex,
   visibleMessages,
+  onCitationClick,
   onCopyMessage,
   onSubmitQuestion,
 }: AgentWidgetMessagesProps) {
@@ -234,6 +238,7 @@ export function AgentWidgetMessages({
           lastAssistantMessageId={lastAssistantMessageId}
           message={message}
           visibleMessages={visibleMessages}
+          onCitationClick={onCitationClick}
           onCopyMessage={onCopyMessage}
           onSubmitQuestion={onSubmitQuestion}
         />

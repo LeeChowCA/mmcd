@@ -5,6 +5,12 @@ export type Citation = {
   url?: string;
   label?: string;
   page?: number;
+  sourceId?: string;
+  pageId?: string;
+  sourceFile?: string;
+  excerpt?: string;
+  matchedText?: string;
+  score?: number;
 };
 
 export type ChatMessage = {
