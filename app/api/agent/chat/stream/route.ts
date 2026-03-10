@@ -3,6 +3,10 @@ import { NextResponse } from "next/server";
 type JsonBody = Record<string, unknown>;
 const DEFAULT_BACKEND_URL = "http://127.0.0.1:8000/api/ask";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const maxDuration = 60;
+
 function getBackendUrl() {
   return process.env.AGENT_BACKEND_URL ?? DEFAULT_BACKEND_URL;
 }
@@ -45,6 +49,48 @@ function createBackendHeaders() {
   }
 
   return headers;
+}
+
+function createSseProxyStream(upstream: ReadableStream<Uint8Array>) {
+  const reader = upstream.getReader();
+  const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  return new ReadableStream<Uint8Array>({
+    async pull(controller) {
+      try {
+        const { done, value } = await reader.read();
+
+        if (done) {
+          const tail = buffer.trim();
+          if (tail) {
+            controller.enqueue(encoder.encode(`data: ${tail}\n\n`));
+          }
+          controller.close();
+          return;
+        }
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split(/\r?\n/);
+        buffer = lines.pop() ?? "";
+
+        for (const rawLine of lines) {
+          const line = rawLine.trim();
+          if (!line) {
+            continue;
+          }
+
+          controller.enqueue(encoder.encode(`data: ${line}\n\n`));
+        }
+      } catch (error) {
+        controller.error(error);
+      }
+    },
+    async cancel(reason) {
+      await reader.cancel(reason);
+    },
+  });
 }
 
 export async function POST(request: Request) {
@@ -104,12 +150,12 @@ export async function POST(request: Request) {
     );
   }
 
-  return new Response(upstream.body, {
+  return new Response(createSseProxyStream(upstream.body), {
     headers: {
-      "Content-Type":
-        upstream.headers.get("content-type") ?? "application/x-ndjson; charset=utf-8",
+      "Content-Type": "text/event-stream; charset=utf-8",
       "Cache-Control": "no-cache, no-transform",
-      Connection: "keep-alive",
+      "Content-Encoding": "none",
+      "X-Accel-Buffering": "no",
     },
   });
 }
