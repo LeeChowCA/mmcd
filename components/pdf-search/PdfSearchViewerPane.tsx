@@ -1,4 +1,4 @@
-import type { RefObject } from "react";
+import { useRef, type KeyboardEvent, type RefObject } from "react";
 import type { SearchHit } from "./types";
 
 type PdfSearchViewerPaneProps = {
@@ -9,6 +9,7 @@ type PdfSearchViewerPaneProps = {
   pageCount: number;
   onPreviousPage: () => void;
   onNextPage: () => void;
+  onPageSelect: (page: number) => void;
   zoomPercent: number;
   minZoom: number;
   maxZoom: number;
@@ -38,6 +39,7 @@ export function PdfSearchViewerPane({
   pageCount,
   onPreviousPage,
   onNextPage,
+  onPageSelect,
   zoomPercent,
   minZoom,
   maxZoom,
@@ -58,6 +60,41 @@ export function PdfSearchViewerPane({
   activeHit,
   activeHitPrintedPageLabel,
 }: PdfSearchViewerPaneProps) {
+  const pageInputRef = useRef<HTMLInputElement | null>(null);
+
+  function commitPageInput() {
+    if (pageCount === 0) {
+      if (pageInputRef.current) {
+        pageInputRef.current.value = "";
+      }
+      return;
+    }
+
+    const rawValue = pageInputRef.current?.value ?? "";
+    const parsed = Number.parseInt(rawValue, 10);
+    if (!Number.isFinite(parsed)) {
+      if (pageInputRef.current) {
+        pageInputRef.current.value = String(currentPage);
+      }
+      return;
+    }
+
+    const nextPage = Math.max(1, Math.min(pageCount, parsed));
+    if (pageInputRef.current) {
+      pageInputRef.current.value = String(nextPage);
+    }
+    if (nextPage !== currentPage) {
+      onPageSelect(nextPage);
+    }
+  }
+
+  function onPageInputKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      commitPageInput();
+    }
+  }
+
   return (
     <section className="viewerPane">
       <div className="paneHeader viewerHeader">
@@ -72,9 +109,24 @@ export function PdfSearchViewerPane({
         <button type="button" onClick={onPreviousPage} disabled={currentPage <= 1}>
           Prev
         </button>
-        <span className="toolbarValue">
-          {pageCount === 0 ? 0 : currentPage} / {pageCount}
-        </span>
+        <label className="toolbarPageGroup">
+          <span className="srOnly">Page number</span>
+          <input
+            key={pageCount === 0 ? "empty-page" : `page-${currentPage}-${pageCount}`}
+            ref={pageInputRef}
+            type="number"
+            inputMode="numeric"
+            min={pageCount > 0 ? 1 : undefined}
+            max={pageCount > 0 ? pageCount : undefined}
+            className="toolbarPageInput"
+            defaultValue={pageCount === 0 ? "" : String(currentPage)}
+            onBlur={commitPageInput}
+            onKeyDown={onPageInputKeyDown}
+            disabled={pageCount === 0}
+            aria-label="Page number"
+          />
+          <span className="toolbarPageTotal">/ {pageCount}</span>
+        </label>
         <button type="button" onClick={onNextPage} disabled={currentPage >= pageCount}>
           Next
         </button>

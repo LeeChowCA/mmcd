@@ -43,13 +43,91 @@ function tokenizeCitationText(value?: string) {
     .match(/[a-z0-9]+(?:\.[a-z0-9]+)*/g) ?? [];
 }
 
+function normalizeCitationOcrArtifacts(value: string) {
+  return value
+    .replace(/\bC\s*ITY\b/gi, "CITY")
+    .replace(/\bE\s*NGINEERING\b/gi, "ENGINEERING")
+    .replace(/\bS\s*UPPLEMENTARY\b/gi, "SUPPLEMENTARY")
+    .replace(/\bS\s*TART\b/gi, "START")
+    .replace(/\bC\s*OMMISSIONING\b/gi, "COMMISSIONING")
+    .replace(/\bS\s*S\s+P\s*AGE\b/gi, "SS PAGE")
+    .replace(/\bMM\s*CD\b/gi, "MMCD");
+}
+
+function stripCitationBoilerplate(value: string) {
+  return normalizeCitationOcrArtifacts(value)
+    .replace(/\bcity of surrey\b/gi, " ")
+    .replace(/\bengineering department\b/gi, " ")
+    .replace(/\blist of approved materials and products\b/gi, " ")
+    .replace(/\bstart-up,\s*testing\s*and\s*commissioning\b/gi, " ")
+    .replace(/\bmmcd section\s+[0-9a-z.\s-]+\b/gi, " ")
+    .replace(/\bss page\s+[0-9a-z.-]+\b/gi, " ")
+    .replace(/\bsupplementary specifications(?:\s+20\d{2})?\b/gi, " ")
+    .replace(/\bmmcd section\b/gi, " ")
+    .replace(/\bapproved material\s*\/\s*type\b/gi, " ")
+    .replace(/\bapproved product\s*\/\s*manufacturer\b/gi, " ")
+    .replace(/\brestrictions\s*\/\s*additional specifications\b/gi, " ")
+    .replace(/\bproduct\b/gi, " ")
+    .replace(/\b2024\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function cleanCitationSignalText(value?: string) {
+  return stripCitationBoilerplate(normalizeCitationQuery(value));
+}
+
+function isMeaningfulCitationSegment(value: string) {
+  const tokens = tokenizeCitationText(value);
+  if (tokens.length < 5) {
+    return false;
+  }
+
+  const alphaChars = value.replace(/[^A-Za-z]/g, "");
+  if (alphaChars.length < 16) {
+    return false;
+  }
+
+  const uppercaseRatio =
+    alphaChars.length > 0 ? alphaChars.replace(/[^A-Z]/g, "").length / alphaChars.length : 0;
+  return uppercaseRatio < 0.8;
+}
+
+function pickCitationSegment(value: string) {
+  const segments = value
+    .split(/(?:\.\.\.+|\u2026|(?<=[.!?])\s+)/)
+    .map((segment) => segment.trim())
+    .filter(isMeaningfulCitationSegment)
+    .sort((a, b) => b.length - a.length);
+
+  if (segments.length > 0) {
+    return segments[0];
+  }
+
+  const tokens = value.split(/\s+/).filter(Boolean);
+  if (tokens.length <= 14) {
+    return value;
+  }
+
+  return tokens.slice(0, 18).join(" ");
+}
+
+function buildCitationMatchedTextQuery(citation: Citation) {
+  const matchedText = cleanCitationSignalText(citation.matchedText);
+  if (!matchedText) {
+    return "";
+  }
+
+  return pickCitationSegment(matchedText);
+}
+
 function buildCitationExcerptQuery(citation: Citation) {
-  const excerpt = normalizeCitationQuery(citation.excerpt);
+  const excerpt = cleanCitationSignalText(citation.excerpt);
   if (!excerpt) {
     return "";
   }
 
-  const matchedText = normalizeCitationQuery(citation.matchedText);
+  const matchedText = cleanCitationSignalText(citation.matchedText);
   if (matchedText) {
     const lowerExcerpt = excerpt.toLowerCase();
     const lowerMatch = matchedText.toLowerCase();
@@ -61,12 +139,7 @@ function buildCitationExcerptQuery(citation: Citation) {
     }
   }
 
-  const tokens = excerpt.split(/\s+/).filter(Boolean);
-  if (tokens.length <= 12) {
-    return excerpt;
-  }
-
-  return tokens.slice(0, 12).join(" ");
+  return pickCitationSegment(excerpt);
 }
 
 type CitationQueryCandidate = {
@@ -74,9 +147,60 @@ type CitationQueryCandidate = {
   allowFuzzy: boolean;
 };
 
+type CitationLine = {
+  items: IndexedTextItem[];
+  y: number;
+  text: string;
+  cleanText: string;
+};
+
+const CITATION_STOPWORDS = new Set([
+  "the",
+  "and",
+  "for",
+  "with",
+  "from",
+  "that",
+  "this",
+  "these",
+  "those",
+  "shall",
+  "must",
+  "where",
+  "into",
+  "they",
+  "them",
+  "their",
+  "are",
+  "was",
+  "were",
+  "been",
+  "being",
+  "have",
+  "has",
+  "had",
+  "will",
+  "would",
+  "should",
+  "could",
+  "all",
+  "any",
+  "can",
+  "not",
+  "but",
+  "before",
+  "after",
+  "during",
+  "under",
+  "include",
+  "including",
+  "therefore",
+  "through",
+]);
+
 function buildCitationQueryCandidates(citation: Citation): CitationQueryCandidate[] {
   const rawCandidates: CitationQueryCandidate[] = [
-    { text: normalizeCitationQuery(citation.matchedText), allowFuzzy: true },
+    { text: buildCitationMatchedTextQuery(citation), allowFuzzy: true },
     { text: buildCitationExcerptQuery(citation), allowFuzzy: true },
     { text: normalizeCitationQuery(citation.label), allowFuzzy: false },
   ];
@@ -95,66 +219,173 @@ function buildCitationQueryCandidates(citation: Citation): CitationQueryCandidat
   return candidates;
 }
 
-function buildCitationContext(hit: SearchHit, pageItems: IndexedTextItem[]) {
-  const from = Math.max(0, hit.itemIndex - 1);
-  const to = Math.min(pageItems.length - 1, hit.itemIndex + 1);
-  return pageItems
-    .slice(from, to + 1)
-    .map((item) => item.text)
-    .join(" ")
-    .replace(/\s+/g, " ")
-    .trim();
+function groupCitationLines(pageItems: IndexedTextItem[]) {
+  const sorted = [...pageItems].sort((a, b) => b.y - a.y || a.x - b.x);
+  const lines: CitationLine[] = [];
+
+  for (const item of sorted) {
+    const line = lines.find(
+      (entry) => Math.abs(entry.y - item.y) <= Math.max(3, Math.max(entry.items[0]?.height ?? 0, item.height) * 0.65),
+    );
+
+    if (line) {
+      line.items.push(item);
+      continue;
+    }
+
+    lines.push({
+      items: [item],
+      y: item.y,
+      text: "",
+      cleanText: "",
+    });
+  }
+
+  return lines
+    .map((line) => {
+      const orderedItems = [...line.items].sort((a, b) => a.x - b.x);
+      const text = orderedItems
+        .map((item) => item.text)
+        .join(" ")
+        .replace(/\s+/g, " ")
+        .trim();
+
+      return {
+        items: orderedItems,
+        y: line.y,
+        text,
+        cleanText: cleanCitationSignalText(text),
+      };
+    })
+    .filter((line) => line.text.length > 0);
 }
 
-function scoreCitationHit(hit: SearchHit, citation: Citation, pageItems: IndexedTextItem[]) {
-  const context = `${hit.snippet} ${buildCitationContext(hit, pageItems)}`.trim();
-  const contextText = normalizeCitationQuery(context).toLowerCase();
-  const contextTokens = new Set(tokenizeCitationText(context));
+function buildCitationTokenSet(value: string) {
+  return new Set(
+    tokenizeCitationText(value).filter((token) => token.length >= 4 && !CITATION_STOPWORDS.has(token)),
+  );
+}
+
+function scoreCitationWindow(windowText: string, candidateText: string) {
+  const cleanWindow = cleanCitationSignalText(windowText).toLowerCase();
+  const cleanCandidate = cleanCitationSignalText(candidateText).toLowerCase();
+  if (!cleanWindow || !cleanCandidate) {
+    return 0;
+  }
+
+  const windowTokens = buildCitationTokenSet(cleanWindow);
+  const candidateTokens = [...buildCitationTokenSet(cleanCandidate)];
+  if (candidateTokens.length === 0) {
+    return 0;
+  }
+
   let score = 0;
-
-  const matchedText = normalizeCitationQuery(citation.matchedText).toLowerCase();
-  if (matchedText) {
-    if (contextText.includes(matchedText)) {
-      score += 140;
-    } else {
-      for (const token of tokenizeCitationText(matchedText)) {
-        if (contextTokens.has(token)) {
-          score += 28;
-        }
-      }
+  for (const token of candidateTokens) {
+    if (windowTokens.has(token)) {
+      score += token.length >= 8 ? 14 : 10;
     }
   }
 
-  const excerptTokens = tokenizeCitationText(citation.excerpt);
-  for (const token of excerptTokens) {
-    if (contextTokens.has(token)) {
-      score += 4;
-    }
+  if (cleanWindow.includes(cleanCandidate)) {
+    score += 120;
   }
 
-  if (/(city of surrey|engineering department|supplementary specifications)/i.test(contextText)) {
-    score -= 90;
+  for (let index = 0; index < candidateTokens.length - 1; index += 1) {
+    const bigram = `${candidateTokens[index]} ${candidateTokens[index + 1]}`;
+    if (cleanWindow.includes(bigram)) {
+      score += 18;
+    }
   }
 
   return score;
 }
 
-function pickBestCitationHit(
-  hits: SearchHit[],
-  citation: Citation,
-  pageItems: IndexedTextItem[],
-  minimumScore = 1,
-) {
-  if (hits.length === 0) {
+function buildCitationWindowHit(citation: Citation, pageItems: IndexedTextItem[]) {
+  const pageNumber = citation.page;
+  if (typeof pageNumber !== "number" || pageItems.length === 0) {
     return null;
   }
 
-  const scored = hits
-    .map((hit) => ({ hit, score: scoreCitationHit(hit, citation, pageItems) }))
-    .filter((entry) => entry.score >= minimumScore)
-    .sort((a, b) => b.score - a.score || a.hit.itemIndex - b.hit.itemIndex);
+  const candidateTexts = buildCitationQueryCandidates(citation)
+    .filter((candidate) => candidate.allowFuzzy)
+    .map((candidate) => candidate.text)
+    .filter(Boolean);
 
-  return scored[0]?.hit ?? null;
+  if (candidateTexts.length === 0) {
+    return null;
+  }
+
+  const pageTopY = pageItems.reduce((maxY, item) => Math.max(maxY, item.y), Number.NEGATIVE_INFINITY);
+  const headerCutoffY = pageTopY - 48;
+  const lines = groupCitationLines(pageItems).filter((line) => line.y < headerCutoffY);
+
+  let best:
+    | {
+        score: number;
+        items: IndexedTextItem[];
+        snippet: string;
+      }
+    | null = null;
+
+  for (let start = 0; start < lines.length; start += 1) {
+    for (let end = start; end < Math.min(lines.length, start + 5); end += 1) {
+      const windowItems = lines.slice(start, end + 1).flatMap((line) => line.items);
+      const windowText = lines
+        .slice(start, end + 1)
+        .map((line) => line.text)
+        .join(" ")
+        .replace(/\s+/g, " ")
+        .trim();
+
+      let score = 0;
+      for (const candidateText of candidateTexts) {
+        score = Math.max(score, scoreCitationWindow(windowText, candidateText));
+      }
+
+      if (score <= 0) {
+        continue;
+      }
+
+      if (!best || score > best.score) {
+        best = {
+          score,
+          items: windowItems,
+          snippet: windowText,
+        };
+      }
+    }
+  }
+
+  if (!best) {
+    return null;
+  }
+
+  const minX = best.items.reduce((value, item) => Math.min(value, item.x), Number.POSITIVE_INFINITY);
+  const maxX = best.items.reduce((value, item) => Math.max(value, item.x + item.width), Number.NEGATIVE_INFINITY);
+  const minY = best.items.reduce((value, item) => Math.min(value, item.y), Number.POSITIVE_INFINITY);
+  const maxY = best.items.reduce((value, item) => Math.max(value, item.y + item.height), Number.NEGATIVE_INFINITY);
+  const firstItem = best.items[0];
+
+  if (!firstItem) {
+    return null;
+  }
+
+  return {
+    id: `citation-${citation.id}-${pageNumber}-window`,
+    pageNumber,
+    itemIndex: firstItem.itemIndex,
+    snippet: best.snippet,
+    x: Math.max(0, minX - 6),
+    y: Math.max(0, minY - 3),
+    width: Math.max(maxX - minX + 12, 24),
+    height: Math.max(maxY - minY + 6, 18),
+    quality: "Citation",
+    location: {
+      section: `Page ${pageNumber}`,
+      part: "Citation",
+      clause: `Page ${pageNumber}`,
+    },
+  };
 }
 
 function buildCitationHit(citation: Citation, pageItems: IndexedTextItem[]): SearchHit | null {
@@ -163,35 +394,15 @@ function buildCitationHit(citation: Citation, pageItems: IndexedTextItem[]): Sea
   }
 
   const pageNumber = citation.page;
-  const pageMap = new Map<number, IndexedTextItem[]>([[pageNumber, pageItems]]);
-
-  for (const candidate of buildCitationQueryCandidates(citation)) {
-    const exactHits = findExactSearchHits(candidate.text, pageMap);
-    const bestExactHit = pickBestCitationHit(exactHits, citation, pageItems, 8);
-    if (bestExactHit) {
-      return {
-        ...bestExactHit,
-        id: `citation-${citation.id}-${bestExactHit.id}`,
-        quality: "Citation",
-      };
-    }
-
-    if (!candidate.allowFuzzy) {
-      continue;
-    }
-
-    const fuzzyHits = findNaturalAnchorsForPage(candidate.text, pageItems, pageNumber, 8);
-    const bestFuzzyHit = pickBestCitationHit(fuzzyHits, citation, pageItems, 18);
-    if (bestFuzzyHit) {
-      return {
-        ...bestFuzzyHit,
-        id: `citation-${citation.id}-${bestFuzzyHit.id}`,
-        quality: "Citation",
-      };
-    }
+  const roughHit = buildCitationWindowHit(citation, pageItems);
+  if (roughHit) {
+    return roughHit;
   }
 
-  const fallbackItem = pageItems.find((item) => item.text.trim());
+  const pageTopY = pageItems.reduce((maxY, item) => Math.max(maxY, item.y), Number.NEGATIVE_INFINITY);
+  const fallbackItem =
+    pageItems.find((item) => item.text.trim() && item.y < pageTopY - 48) ??
+    pageItems.find((item) => item.text.trim());
   if (!fallbackItem) {
     return null;
   }
@@ -712,6 +923,11 @@ export function PdfSearchApp() {
     setCurrentPage((page) => Math.min(pageCount, page + 1));
   }
 
+  function goToPage(page: number) {
+    setCitationFocus(null);
+    setCurrentPage(Math.max(1, Math.min(pageCount, page)));
+  }
+
   function zoomOut() {
     setZoomPercent((zoom) => Math.max(MIN_ZOOM, zoom - ZOOM_STEP));
   }
@@ -821,6 +1037,7 @@ export function PdfSearchApp() {
           pageCount={pageCount}
           onPreviousPage={previousPage}
           onNextPage={nextPage}
+          onPageSelect={goToPage}
           zoomPercent={zoomPercent}
           minZoom={MIN_ZOOM}
           maxZoom={MAX_ZOOM}

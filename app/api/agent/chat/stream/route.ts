@@ -58,34 +58,40 @@ function createSseProxyStream(upstream: ReadableStream<Uint8Array>) {
   let buffer = "";
 
   return new ReadableStream<Uint8Array>({
-    async pull(controller) {
-      try {
-        const { done, value } = await reader.read();
+    start(controller) {
+      controller.enqueue(encoder.encode(": stream-start\n\n"));
 
-        if (done) {
-          const tail = buffer.trim();
-          if (tail) {
-            controller.enqueue(encoder.encode(`data: ${tail}\n\n`));
+      void (async () => {
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+
+            if (done) {
+              const tail = buffer.trim();
+              if (tail) {
+                controller.enqueue(encoder.encode(`data: ${tail}\n\n`));
+              }
+              controller.close();
+              return;
+            }
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split(/\r?\n/);
+            buffer = lines.pop() ?? "";
+
+            for (const rawLine of lines) {
+              const line = rawLine.trim();
+              if (!line) {
+                continue;
+              }
+
+              controller.enqueue(encoder.encode(`data: ${line}\n\n`));
+            }
           }
-          controller.close();
-          return;
+        } catch (error) {
+          controller.error(error);
         }
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split(/\r?\n/);
-        buffer = lines.pop() ?? "";
-
-        for (const rawLine of lines) {
-          const line = rawLine.trim();
-          if (!line) {
-            continue;
-          }
-
-          controller.enqueue(encoder.encode(`data: ${line}\n\n`));
-        }
-      } catch (error) {
-        controller.error(error);
-      }
+      })();
     },
     async cancel(reason) {
       await reader.cancel(reason);

@@ -105,6 +105,28 @@ function buildContextSnippet(items: IndexedTextItem[], startIndex: number, endIn
   );
 }
 
+function buildItemRangeBounds(items: IndexedTextItem[], startIndex: number, endIndex: number) {
+  const range = items.slice(startIndex, endIndex + 1).filter(Boolean);
+  if (range.length === 0) {
+    return null;
+  }
+
+  const minX = range.reduce((value, item) => Math.min(value, item.x), Number.POSITIVE_INFINITY);
+  const minY = range.reduce((value, item) => Math.min(value, item.y), Number.POSITIVE_INFINITY);
+  const maxX = range.reduce((value, item) => Math.max(value, item.x + item.width), Number.NEGATIVE_INFINITY);
+  const maxY = range.reduce(
+    (value, item) => Math.max(value, item.y + item.height),
+    Number.NEGATIVE_INFINITY,
+  );
+
+  return {
+    x: minX,
+    y: minY,
+    width: Math.max(maxX - minX, 3),
+    height: Math.max(maxY - minY, 12),
+  };
+}
+
 function buildTopLines(items: IndexedTextItem[]) {
   if (items.length === 0) {
     return [];
@@ -258,6 +280,28 @@ function areItemsLikelyContinuousToken(previous: IndexedTextItem, current: Index
 
   // Allow tiny overlap/kerning and small positive gaps for split glyph runs.
   return gap >= -height * 0.8 && gap <= height * 1.2;
+}
+
+function areItemsLikelyAdjacentText(previous: IndexedTextItem, current: IndexedTextItem) {
+  const height = Math.max(previous.height, current.height, 1);
+  const verticalDelta = previous.y - current.y;
+  const sameLine = Math.abs(previous.y - current.y) <= height * 0.7;
+
+  if (sameLine) {
+    const previousRight = previous.x + previous.width;
+    const gap = current.x - previousRight;
+
+    // Allow normal word spacing and table-column jumps on the same visual row.
+    return gap >= -height * 1.2 && gap <= height * 22;
+  }
+
+  const nextLine = verticalDelta >= height * 0.6 && verticalDelta <= height * 2.5;
+  if (!nextLine) {
+    return false;
+  }
+
+  // Keep matches within the same text block instead of jumping between header and body.
+  return Math.abs(current.x - previous.x) <= Math.max(previous.width, current.width, height * 18);
 }
 
 type ScoredSnippet = {
@@ -621,6 +665,23 @@ export function findExactSearchHits(query: string, pageIndex: Map<number, Indexe
           matches = false;
           break;
         }
+
+        if (j === 0) {
+          continue;
+        }
+
+        const previous = flattenedTokens[i + j - 1];
+        const current = flattenedTokens[i + j];
+        if (previous.pageItemIndex === current.pageItemIndex) {
+          continue;
+        }
+
+        const previousItem = items[previous.pageItemIndex];
+        const currentItem = items[current.pageItemIndex];
+        if (!previousItem || !currentItem || !areItemsLikelyAdjacentText(previousItem, currentItem)) {
+          matches = false;
+          break;
+        }
       }
 
       if (!matches) {
@@ -630,22 +691,20 @@ export function findExactSearchHits(query: string, pageIndex: Map<number, Indexe
       const first = flattenedTokens[i];
       const last = flattenedTokens[i + queryTokens.length - 1];
       const firstItem = items[first.pageItemIndex];
-      if (!firstItem) {
+      const bounds = buildItemRangeBounds(items, first.pageItemIndex, last.pageItemIndex);
+      if (!firstItem || !bounds) {
         continue;
       }
-
-      const safeLength = Math.max(firstItem.text.length, 1);
-      const hitWidth = Math.max((firstItem.width * firstQueryToken.length) / safeLength, 3);
 
       hits.push({
         id: `${pageNumber}-${firstItem.itemIndex}-tokens-${i}`,
         pageNumber,
         itemIndex: firstItem.itemIndex,
         snippet: buildContextSnippet(items, first.pageItemIndex, last.pageItemIndex),
-        x: firstItem.x,
-        y: firstItem.y,
-        width: hitWidth,
-        height: firstItem.height,
+        x: bounds.x,
+        y: bounds.y,
+        width: bounds.width,
+        height: bounds.height,
         location: deriveHitLocation(items, first.pageItemIndex, pageNumber),
         quality: "High Match",
       });

@@ -266,12 +266,78 @@ function formatCitationLabel(citation: Citation) {
   return `Source ${citation.id}`;
 }
 
+function normalizeCitationOcrArtifacts(value: string) {
+  return value
+    .replace(/\bC\s*ITY\b/gi, "CITY")
+    .replace(/\bE\s*NGINEERING\b/gi, "ENGINEERING")
+    .replace(/\bS\s*UPPLEMENTARY\b/gi, "SUPPLEMENTARY")
+    .replace(/\bS\s*TART\b/gi, "START")
+    .replace(/\bC\s*OMMISSIONING\b/gi, "COMMISSIONING")
+    .replace(/\bS\s*S\s+P\s*AGE\b/gi, "SS PAGE")
+    .replace(/\bMM\s*CD\b/gi, "MMCD");
+}
+
+function cleanCitationPreviewText(value?: string) {
+  if (!value) {
+    return "";
+  }
+
+  return normalizeCitationOcrArtifacts(value)
+    .replace(/^\.{3}|\.\.\.$/g, "")
+    .replace(/\bcity of surrey\b/gi, " ")
+    .replace(/\bengineering department\b/gi, " ")
+    .replace(/\blist of approved materials and products\b/gi, " ")
+    .replace(/\bstart-up,\s*testing\s*and\s*commissioning\b/gi, " ")
+    .replace(/\breferenced specifications\b/gi, " ")
+    .replace(/\bmmcd section\s+[0-9a-z.\s-]+\b/gi, " ")
+    .replace(/\bss page\s+[0-9a-z.-]+\b/gi, " ")
+    .replace(/\bsupplementary specifications(?:\s+20\d{2})?\b/gi, " ")
+    .replace(/\b20\d{2}\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function isMeaningfulPreviewSegment(value: string) {
+  const tokens = value.match(/[a-z0-9]+(?:\.[a-z0-9]+)*/gi) ?? [];
+  if (tokens.length < 5) {
+    return false;
+  }
+
+  const alphaChars = value.replace(/[^A-Za-z]/g, "");
+  if (alphaChars.length < 16) {
+    return false;
+  }
+
+  const uppercaseRatio =
+    alphaChars.length > 0 ? alphaChars.replace(/[^A-Z]/g, "").length / alphaChars.length : 0;
+  return uppercaseRatio < 0.8;
+}
+
+function pickCitationPreviewSegment(value: string) {
+  const segments = value
+    .split(/(?:\.\.\.+|\u2026|(?<=[.!?])\s+)/)
+    .map((segment) => segment.trim())
+    .filter(isMeaningfulPreviewSegment)
+    .sort((a, b) => b.length - a.length);
+
+  if (segments.length > 0) {
+    return segments[0];
+  }
+
+  const tokens = value.split(/\s+/).filter(Boolean);
+  if (tokens.length <= 22) {
+    return value;
+  }
+
+  return `${tokens.slice(0, 22).join(" ")}...`;
+}
+
 function renderHighlightedPreviewText(text: string, matchedText?: string) {
   if (!matchedText) {
     return text;
   }
 
-  const normalizedMatch = matchedText.trim();
+  const normalizedMatch = cleanCitationPreviewText(matchedText);
   if (!normalizedMatch) {
     return text;
   }
@@ -290,8 +356,22 @@ function renderHighlightedPreviewText(text: string, matchedText?: string) {
 }
 
 function buildCitationPreviewText(citation: Citation) {
-  if (citation.excerpt?.trim()) {
-    return citation.excerpt.trim();
+  const cleanedExcerpt = cleanCitationPreviewText(citation.excerpt);
+  if (cleanedExcerpt) {
+    const cleanedMatch = cleanCitationPreviewText(citation.matchedText);
+    if (cleanedMatch) {
+      const lowerExcerpt = cleanedExcerpt.toLowerCase();
+      const lowerMatch = cleanedMatch.toLowerCase();
+      const matchIndex = lowerExcerpt.indexOf(lowerMatch);
+
+      if (matchIndex >= 0) {
+        const from = Math.max(0, matchIndex - 48);
+        const to = Math.min(cleanedExcerpt.length, matchIndex + cleanedMatch.length + 48);
+        return cleanedExcerpt.slice(from, to).trim();
+      }
+    }
+
+    return pickCitationPreviewSegment(cleanedExcerpt);
   }
 
   const pageText =

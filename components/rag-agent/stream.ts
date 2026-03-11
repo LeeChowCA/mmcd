@@ -89,6 +89,11 @@ export async function streamAgentReply(
         continue;
       }
 
+      // Ignore SSE comments/metadata such as ": keep-alive" or ": stream-start".
+      if (line.startsWith(":") || line.startsWith("event:") || line.startsWith("id:")) {
+        continue;
+      }
+
       const payloadLine = line.startsWith("data:") ? line.slice(5).trim() : line;
       if (!payloadLine || payloadLine === "[DONE]") {
         continue;
@@ -105,6 +110,10 @@ export async function streamAgentReply(
 
   const tail = buffer.trim();
   if (tail) {
+    if (tail.startsWith(":") || tail.startsWith("event:") || tail.startsWith("id:")) {
+      return;
+    }
+
     const tailPayload = tail.startsWith("data:") ? tail.slice(5).trim() : tail;
     if (tailPayload && tailPayload !== "[DONE]") {
       try {
