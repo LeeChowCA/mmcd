@@ -120,13 +120,20 @@ export function PdfSearchResultsPane({
   query,
   onJumpToHit,
 }: PdfSearchResultsPaneProps) {
+  const resultCountLabel = `${searchHits.length} ${searchHits.length === 1 ? "match" : "matches"}`;
+
   return (
     <aside className="resultsPane">
       <div className="paneHeader">
-        <h2>
-          {searchHits.length} results in {activeSourceLabel}
-        </h2>
-        <p>{searchMode === "exact" ? "Keyword Search" : "Fuzzy Similarity Search"}</p>
+        <span className="paneEyebrow">
+          {searchMode === "exact" ? "Keyword retrieval" : "Similarity retrieval"}
+        </span>
+        <h2>{resultCountLabel}</h2>
+        <p>
+          {searchHits.length === 0
+            ? `Run a search in ${activeSourceLabel} to reveal ranked excerpts.`
+            : `Ranked evidence from ${activeSourceLabel}.`}
+        </p>
       </div>
 
       <div className="resultsList">
@@ -138,36 +145,33 @@ export function PdfSearchResultsPane({
               const active = hit.id === activeHitId;
               const hitPrintedPageLabel = printedPageLabels.get(hit.pageNumber) ?? hit.location.clause;
               const hitSectionTitle = sectionTitlesByPage.get(hit.pageNumber) ?? hit.location.section;
-              const fileLabel = `${activeSourceLabel} Document`;
+              const metaLabel = hit.location.part?.trim() || "Document excerpt";
               return (
                 <li key={hit.id} className={active ? "active" : ""}>
-                  {searchMode === "fuzzy" ? (
-                    <div className="resultTop">
-                      <span className="matchBadge">{hit.quality}</span>
+                  <div className="resultTopRow">
+                    <span className="resultPageChip">P.{hitPrintedPageLabel}</span>
+                    {searchMode === "fuzzy" ? <span className="matchBadge">{hit.quality}</span> : null}
+                  </div>
+
+                  <div className="resultTitleStack">
+                    <p className="resultSectionTitle">{hitSectionTitle}</p>
+                    <p className="resultMetaInline">
+                      {activeSourceLabel} / {metaLabel}
+                    </p>
+                  </div>
+
+                  <p className="resultSnippet">{renderMarkedSnippet(hit.snippet, query)}</p>
+
+                  <div className="resultFooter">
+                    <div className="resultMetaChips" aria-label="Result metadata">
+                      <span className="resultMetaChip">Page {hitPrintedPageLabel}</span>
+                      <span className="resultMetaChip">{metaLabel}</span>
                     </div>
-                  ) : null}
 
-                  <p className="resultMetaRow">
-                    <span className="resultKey">File:</span>
-                    <span className="resultValue">{fileLabel}</span>
-                  </p>
-                  <p className="resultMetaRow">
-                    <span className="resultKey">Section:</span>
-                    <span className="resultValue">{hitSectionTitle}</span>
-                  </p>
-                  <p className="resultMetaRow">
-                    <span className="resultKey">Page:</span>
-                    <span className="resultValue">{hitPrintedPageLabel}</span>
-                  </p>
-
-                  <p className="resultMetaRow resultSnippet">
-                    <span className="resultKey">Excerpt:</span>
-                    <span className="resultValue">{renderMarkedSnippet(hit.snippet, query)}</span>
-                  </p>
-
-                  <button type="button" className="openButton" onClick={() => onJumpToHit(hit)}>
-                    Open
-                  </button>
+                    <button type="button" className="openButton" onClick={() => onJumpToHit(hit)}>
+                      Open page
+                    </button>
+                  </div>
                 </li>
               );
             })}

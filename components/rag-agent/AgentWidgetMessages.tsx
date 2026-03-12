@@ -33,21 +33,25 @@ type StarterQuestionsProps = {
 function StarterQuestions({ isSending, onSubmitQuestion }: StarterQuestionsProps) {
   return (
     <section className="agentSuggestedBlock">
+      <p className="agentSuggestedEyebrow">Cited assistant</p>
       <h3>{STARTER_HEADLINE}</h3>
-      <ul className="agentSuggestedList">
+      <p className="agentSuggestedLead">
+        Ask for summaries, obligations, testing procedures, or source locations. Every answer can
+        route you back to the exact PDF page.
+      </p>
+      <div className="agentSuggestedGrid">
         {RECOMMENDED_QUESTIONS.map((question) => (
-          <li key={question}>
-            <button
-              type="button"
-              className="agentSuggestedChip"
-              onClick={() => onSubmitQuestion(question)}
-              disabled={isSending}
-            >
-              {question}
-            </button>
-          </li>
+          <button
+            key={question}
+            type="button"
+            className="agentSuggestedChip"
+            onClick={() => onSubmitQuestion(question)}
+            disabled={isSending}
+          >
+            {question}
+          </button>
         ))}
-      </ul>
+      </div>
     </section>
   );
 }
@@ -132,7 +136,15 @@ function AgentMessageItem({
                     title="Like reply"
                     aria-label="Like reply"
                   >
-                    {"\u{1F44D}"}
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path
+                        d="M10 21H6a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2h4m3-7 1 6h4.2a2 2 0 0 1 1.97 2.35l-.8 5A2 2 0 0 1 17.4 19H10"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
                   </button>
                   <button
                     type="button"
@@ -140,7 +152,15 @@ function AgentMessageItem({
                     title="Dislike reply"
                     aria-label="Dislike reply"
                   >
-                    {"\u{1F44E}"}
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path
+                        d="M14 3h4a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-4m-3 7-1-6H5.8a2 2 0 0 1-1.97-2.35l.8-5A2 2 0 0 1 6.6 5H14"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
                   </button>
                 </>
               ) : null}

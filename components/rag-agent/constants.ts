@@ -1,4 +1,4 @@
-export const STARTER_HEADLINE = "What can I break down for you?";
+export const STARTER_HEADLINE = "Ask for answers, then inspect the source.";
 
 export const RECOMMENDED_QUESTIONS = [
   "What are the key contractor obligations in SGC?",

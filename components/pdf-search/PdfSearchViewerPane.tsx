@@ -98,60 +98,74 @@ export function PdfSearchViewerPane({
   return (
     <section className="viewerPane">
       <div className="paneHeader viewerHeader">
-        <div>
-          <h2>Viewing: {activeSourceLabel}</h2>
-          <p>Matches in this document: {searchHitsCount}</p>
+        <div className="viewerHeading">
+          <span className="paneEyebrow">Source viewer</span>
+          <h2>{activeSourceLabel}</h2>
+          <p>
+            {searchHitsCount} {searchHitsCount === 1 ? "match" : "matches"} available in this
+            document
+          </p>
         </div>
-        <div className="viewerStatus">{searchMessage ?? "Ready for search."}</div>
+        <div className="viewerStatusCard">
+          <span className="viewerStatusLabel">Status</span>
+          <div className="viewerStatus">{searchMessage ?? "Ready to inspect cited pages."}</div>
+        </div>
       </div>
 
       <div className="viewerToolbar">
-        <button type="button" onClick={onPreviousPage} disabled={currentPage <= 1}>
-          Prev
-        </button>
-        <label className="toolbarPageGroup">
-          <span className="srOnly">Page number</span>
-          <input
-            key={pageCount === 0 ? "empty-page" : `page-${currentPage}-${pageCount}`}
-            ref={pageInputRef}
-            type="number"
-            inputMode="numeric"
-            min={pageCount > 0 ? 1 : undefined}
-            max={pageCount > 0 ? pageCount : undefined}
-            className="toolbarPageInput"
-            defaultValue={pageCount === 0 ? "" : String(currentPage)}
-            onBlur={commitPageInput}
-            onKeyDown={onPageInputKeyDown}
-            disabled={pageCount === 0}
-            aria-label="Page number"
-          />
-          <span className="toolbarPageTotal">/ {pageCount}</span>
-        </label>
-        <button type="button" onClick={onNextPage} disabled={currentPage >= pageCount}>
-          Next
-        </button>
+        <div className="viewerToolbarGroup">
+          <button type="button" onClick={onPreviousPage} disabled={currentPage <= 1}>
+            Prev
+          </button>
+          <label className="toolbarPageGroup">
+            <span className="toolbarGroupLabel">Page</span>
+            <input
+              key={pageCount === 0 ? "empty-page" : `page-${currentPage}-${pageCount}`}
+              ref={pageInputRef}
+              type="number"
+              inputMode="numeric"
+              min={pageCount > 0 ? 1 : undefined}
+              max={pageCount > 0 ? pageCount : undefined}
+              className="toolbarPageInput"
+              defaultValue={pageCount === 0 ? "" : String(currentPage)}
+              onBlur={commitPageInput}
+              onKeyDown={onPageInputKeyDown}
+              disabled={pageCount === 0}
+              aria-label="Page number"
+            />
+            <span className="toolbarPageTotal">/ {pageCount}</span>
+          </label>
+          <button type="button" onClick={onNextPage} disabled={currentPage >= pageCount}>
+            Next
+          </button>
+        </div>
 
         <span className="toolbarDivider" />
 
-        <button type="button" onClick={onZoomOut} disabled={zoomPercent <= minZoom}>
-          -
-        </button>
-        <span className="toolbarValue">{zoomPercent}%</span>
-        <button type="button" onClick={onZoomIn} disabled={zoomPercent >= maxZoom}>
-          +
-        </button>
-        <button type="button" onClick={onResetZoom}>
-          100%
-        </button>
+        <div className="viewerToolbarGroup">
+          <span className="toolbarGroupLabel">Zoom</span>
+          <button type="button" onClick={onZoomOut} disabled={zoomPercent <= minZoom}>
+            -
+          </button>
+          <span className="toolbarValue">{zoomPercent}%</span>
+          <button type="button" onClick={onZoomIn} disabled={zoomPercent >= maxZoom}>
+            +
+          </button>
+          <button type="button" onClick={onResetZoom}>
+            Reset
+          </button>
+        </div>
 
         <span className="toolbarDivider" />
 
-        <button type="button" onClick={onPrintSource} disabled={!hasActiveSource}>
-          Print
-        </button>
-        <button type="button" onClick={onDownloadSource} disabled={!hasActiveSource}>
-          Download
-        </button>
+        <div className="viewerToolbarGroup">
+          <button type="button" onClick={onPrintSource} disabled={!hasActiveSource}>
+            Open PDF
+          </button>
+          <button type="button" onClick={onDownloadSource} disabled={!hasActiveSource}>
+            Download
+          </button>
+        </div>
       </div>
 
       <div className="viewerCanvasFrame" ref={canvasContainerRef}>
@@ -199,7 +213,7 @@ export function PdfSearchViewerPane({
 
       {activeHit ? (
         <div className="activeMatchBar">
-          Active match: {activeHitPrintedPageLabel ?? `PDF page ${activeHit.pageNumber}`}, item{" "}
+          Active evidence: {activeHitPrintedPageLabel ?? `PDF page ${activeHit.pageNumber}`}, item{" "}
           {activeHit.itemIndex + 1}
         </div>
       ) : null}

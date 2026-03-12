@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "MMCD Search",
+  title: "Scale Technics | MMCD Intelligence Workspace",
   description:
-    "Search specifications, requirements, and procedures across municipal construction PDF documents.",
+    "Search construction specifications, inspect cited PDF pages, and ask an evidence-linked MMCD agent.",
 };
 
 export default function RootLayout({

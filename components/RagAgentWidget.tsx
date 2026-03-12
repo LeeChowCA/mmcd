@@ -237,7 +237,7 @@ export function RagAgentWidget({ onCitationClick }: RagAgentWidgetProps) {
           onClick={() => setIsOpen(true)}
           aria-expanded={isOpen}
         >
-          Ask Agent
+          Ask MMCD Agent
         </button>
       ) : null}
 
@@ -280,12 +280,14 @@ export function RagAgentWidget({ onCitationClick }: RagAgentWidgetProps) {
           <textarea
             value={input}
             onChange={(event) => setInput(event.target.value)}
-            placeholder="Ask, search, or make anything..."
+            placeholder="Ask about specifications, requirements, procedures, or cited source pages..."
             rows={1}
             disabled={isSending}
           />
           <div className="agentWidgetFormFooter">
-            <p className="agentWidgetFormNote">For reference only - AI-generated content.</p>
+            <p className="agentWidgetFormNote">
+              Answers are AI-generated and should be verified against the cited source.
+            </p>
             <button type="submit" disabled={isSending || input.trim().length === 0}>
               {isSending ? "Sending..." : "Send"}
             </button>

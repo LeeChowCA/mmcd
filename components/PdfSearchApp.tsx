@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { PDFDocumentProxy } from "pdfjs-dist/types/src/display/api";
 import type { DocumentSource } from "@/lib/documentSources";
 import { PdfSearchResultsPane } from "./pdf-search/PdfSearchResultsPane";
@@ -517,6 +517,30 @@ export function PdfSearchApp() {
     return `Viewing citation in ${label}.`;
   }, [activeSource?.label, citationFocus, searchMessage]);
 
+  useLayoutEffect(() => {
+    function resetHorizontalScroll() {
+      const top = window.scrollY;
+      window.scrollTo({ left: 0, top });
+      document.documentElement.scrollLeft = 0;
+      document.body.scrollLeft = 0;
+    }
+
+    let nestedFrame = 0;
+    const frame = window.requestAnimationFrame(() => {
+      resetHorizontalScroll();
+      nestedFrame = window.requestAnimationFrame(resetHorizontalScroll);
+    });
+
+    window.addEventListener("resize", resetHorizontalScroll, { passive: true });
+    return () => {
+      window.cancelAnimationFrame(frame);
+      if (nestedFrame) {
+        window.cancelAnimationFrame(nestedFrame);
+      }
+      window.removeEventListener("resize", resetHorizontalScroll);
+    };
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -743,19 +767,39 @@ export function PdfSearchApp() {
       return;
     }
 
-    const activeHighlight = canvasContainerRef.current.querySelector<HTMLElement>(
+    const container = canvasContainerRef.current;
+    const activeHighlight = container.querySelector<HTMLElement>(
       `[data-hit-id="${viewerActiveHitId}"]`,
     );
 
-    if (activeHighlight) {
-      activeHighlight.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-        inline: "center",
-      });
+    if (!activeHighlight) {
+      return;
+    }
+
+    const containerRect = container.getBoundingClientRect();
+    const highlightRect = activeHighlight.getBoundingClientRect();
+    const targetTop =
+      container.scrollTop +
+      (highlightRect.top - containerRect.top) -
+      (container.clientHeight - highlightRect.height) / 2;
+    const targetLeft =
+      container.scrollLeft +
+      (highlightRect.left - containerRect.left) -
+      (container.clientWidth - highlightRect.width) / 2;
+
+    const nextTop = Math.max(0, Math.min(targetTop, container.scrollHeight - container.clientHeight));
+    const nextLeft = Math.max(0, Math.min(targetLeft, container.scrollWidth - container.clientWidth));
+
+    container.scrollTo({
+      top: nextTop,
+      left: nextLeft,
+      behavior: "smooth",
+    });
+
+    if (window.scrollX !== 0) {
+      window.scrollTo({ left: 0, top: window.scrollY });
     }
   }, [viewerActiveHitId, currentPage]);
-
   useEffect(() => {
     if (!citationFocus || !activeSource || typeof citationFocus.page !== "number") {
       return;
@@ -770,9 +814,17 @@ export function PdfSearchApp() {
     }
   }, [activeSource, citationFocus, currentPage]);
 
+  function resetHorizontalOffset() {
+    const top = window.scrollY;
+    window.scrollTo({ left: 0, top });
+    document.documentElement.scrollLeft = 0;
+    document.body.scrollLeft = 0;
+  }
+
   async function executeSearch() {
     const trimmedQuery = query.trim();
     setCitationFocus(null);
+    resetHorizontalOffset();
     if (!trimmedQuery) {
       setSearchHits([]);
       setActiveHitId(null);
@@ -870,10 +922,12 @@ export function PdfSearchApp() {
           setActiveHitId(null);
           setSearchMessage(`No fuzzy matches found at ${NATURAL_SEARCH_MIN_PCT}%+ similarity.`);
         }
+        window.requestAnimationFrame(resetHorizontalOffset);
       } catch {
         setSearchHits([]);
         setActiveHitId(null);
         setSearchMessage("Fuzzy search is unavailable right now.");
+        window.requestAnimationFrame(resetHorizontalOffset);
       } finally {
         setSearchingFuzzy(false);
       }
@@ -887,9 +941,11 @@ export function PdfSearchApp() {
       setCurrentPage(hits[0].pageNumber);
       setActiveHitId(hits[0].id);
       setSearchMessage(`Found ${hits.length} results in ${activeSource?.label ?? "source"}.`);
+      window.requestAnimationFrame(resetHorizontalOffset);
     } else {
       setActiveHitId(null);
       setSearchMessage("No exact matches found in this source.");
+      window.requestAnimationFrame(resetHorizontalOffset);
     }
   }
 
