@@ -244,7 +244,7 @@ export function AgentWidgetMessages({
   onSubmitQuestion,
 }: AgentWidgetMessagesProps) {
   return (
-    <div className="agentWidgetMessages">
+    <div className={`agentWidgetMessages ${isStarterState ? "agentWidgetMessages--starter" : ""}`.trim()}>
       {isStarterState ? (
         <StarterQuestions isSending={isSending} onSubmitQuestion={onSubmitQuestion} />
       ) : null}

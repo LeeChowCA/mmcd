@@ -3,37 +3,17 @@
 import Image from "next/image";
 
 type AgentWidgetHeaderProps = {
-  conversationTitle: string;
   isExpanded: boolean;
   onToggleExpanded: () => void;
   onClose: () => void;
 };
 
-export function AgentWidgetHeader({
-  conversationTitle,
-  isExpanded,
-  onToggleExpanded,
-  onClose,
-}: AgentWidgetHeaderProps) {
+export function AgentWidgetHeader({ isExpanded, onToggleExpanded, onClose }: AgentWidgetHeaderProps) {
   return (
     <header className="agentWidgetHeader">
       <div className="agentHeaderIdentity">
         <div className="agentHeaderAvatar" aria-hidden="true">
           <Image src="/scale_technics.png" alt="" width={36} height={36} />
-        </div>
-        <div className="agentHeaderTitleButton" title={conversationTitle}>
-          <span className="agentHeaderTitleText">{conversationTitle}</span>
-          <span className="agentHeaderCaret" aria-hidden="true">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M6 9l6 6 6-6"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </span>
         </div>
       </div>
 

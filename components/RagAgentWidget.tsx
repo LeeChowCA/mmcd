@@ -1,11 +1,10 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { AgentWidgetHeader } from "./rag-agent/AgentWidgetHeader";
 import { AgentWidgetMessages } from "./rag-agent/AgentWidgetMessages";
 import { STARTER_HEADLINE, THOUGHT_STEPS } from "./rag-agent/constants";
 import {
-  buildConversationTitle,
   buildFallbackSuggestedQuestions,
   createMessage,
   extractAssistantCitations,
@@ -31,6 +30,7 @@ export function RagAgentWidget({ onCitationClick }: RagAgentWidgetProps) {
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const visibleMessages = useMemo(
     () =>
@@ -46,7 +46,6 @@ export function RagAgentWidget({ onCitationClick }: RagAgentWidgetProps) {
   );
 
   const isStarterState = visibleMessages.length === 0 && !isSending;
-  const conversationTitle = useMemo(() => buildConversationTitle(visibleMessages), [visibleMessages]);
   const thinkingStep = THOUGHT_STEPS[Math.min(thinkingStepIndex, THOUGHT_STEPS.length - 1)];
   const thinkingProgressPct = Math.round(
     ((Math.min(thinkingStepIndex, THOUGHT_STEPS.length - 1) + 1) / THOUGHT_STEPS.length) * 100,
@@ -70,6 +69,19 @@ export function RagAgentWidget({ onCitationClick }: RagAgentWidgetProps) {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [visibleMessages, isOpen, isSending]);
+
+  useLayoutEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) {
+      return;
+    }
+
+    const maxHeight = 168;
+    textarea.style.height = "0px";
+    const nextHeight = Math.min(textarea.scrollHeight, maxHeight);
+    textarea.style.height = `${nextHeight}px`;
+    textarea.style.overflowY = textarea.scrollHeight > maxHeight ? "auto" : "hidden";
+  }, [input, isOpen, isExpanded]);
 
   useEffect(() => {
     if (!copiedMessageId) {
@@ -246,7 +258,6 @@ export function RagAgentWidget({ onCitationClick }: RagAgentWidgetProps) {
         aria-hidden={!isOpen}
       >
         <AgentWidgetHeader
-          conversationTitle={conversationTitle}
           isExpanded={isExpanded}
           onToggleExpanded={() => setIsExpanded((current) => !current)}
           onClose={() => {
@@ -276,12 +287,16 @@ export function RagAgentWidget({ onCitationClick }: RagAgentWidgetProps) {
           }}
         />
 
-        <form className="agentWidgetForm" onSubmit={onSubmit}>
+        <form
+          className={`agentWidgetForm ${isStarterState ? "agentWidgetForm--starter" : ""}`.trim()}
+          onSubmit={onSubmit}
+        >
           <textarea
+            ref={textareaRef}
             value={input}
             onChange={(event) => setInput(event.target.value)}
             placeholder="Ask about specifications, requirements, procedures, or cited source pages..."
-            rows={1}
+            rows={2}
             disabled={isSending}
           />
           <div className="agentWidgetFormFooter">

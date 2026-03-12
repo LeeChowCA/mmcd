@@ -3996,3 +3996,135 @@ body {
     height: 2.95rem;
   }
 }
+/* Agent starter-state fit and composer sizing */
+.agentHeaderIdentity {
+  flex: 0 0 auto;
+}
+
+.agentWidgetHeader {
+  padding: 12px 14px 10px;
+}
+
+.agentWidgetMessages--starter {
+  padding-top: 12px;
+  padding-bottom: 8px;
+  gap: 0.85rem;
+  overflow: hidden;
+}
+
+.agentWidgetMessages--starter .agentSuggestedBlock {
+  padding: 0.95rem;
+  border-radius: 22px;
+}
+
+.agentWidgetMessages--starter .agentSuggestedEyebrow {
+  margin-bottom: 0.35rem;
+  font-size: 0.68rem;
+}
+
+.agentWidgetMessages--starter .agentSuggestedBlock h3 {
+  font-size: 1.28rem;
+  line-height: 1.02;
+}
+
+.agentWidgetMessages--starter .agentSuggestedLead {
+  margin-top: 0.45rem;
+  font-size: 0.9rem;
+  line-height: 1.42;
+}
+
+.agentWidgetMessages--starter .agentSuggestedGrid {
+  margin-top: 0.8rem;
+  gap: 0.55rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.agentWidgetMessages--starter .agentSuggestedChip {
+  min-height: 0;
+  padding: 0.85rem 0.95rem;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.agentWidgetForm--starter {
+  padding-top: 10px;
+}
+
+.agentWidgetForm--starter textarea,
+.agentWidgetForm textarea {
+  min-height: 68px;
+  max-height: 168px;
+  overflow-y: hidden;
+}
+
+.agentWidgetForm--starter .agentWidgetFormNote {
+  display: none;
+}
+
+.agentWidgetForm--starter .agentWidgetFormFooter {
+  justify-content: flex-end;
+}
+
+@container agent-panel (max-width: 520px) {
+  .agentWidgetMessages--starter {
+    padding-top: 10px;
+  }
+
+  .agentWidgetMessages--starter .agentSuggestedBlock {
+    padding: 0.85rem;
+  }
+
+  .agentWidgetMessages--starter .agentSuggestedBlock h3 {
+    font-size: 1.14rem;
+  }
+
+  .agentWidgetMessages--starter .agentSuggestedLead {
+    font-size: 0.84rem;
+    line-height: 1.34;
+  }
+
+  .agentWidgetMessages--starter .agentSuggestedGrid {
+    margin-top: 0.7rem;
+    gap: 0.45rem;
+    grid-template-columns: 1fr;
+  }
+
+  .agentWidgetMessages--starter .agentSuggestedChip {
+    padding: 0.72rem 0.82rem;
+    font-size: 0.82rem;
+  }
+
+  .agentWidgetForm--starter {
+    padding: 8px 12px 12px;
+  }
+
+  .agentWidgetForm--starter textarea,
+  .agentWidgetForm textarea {
+    min-height: 64px;
+  }
+}
+/* Agent surface consistency */
+.agentWidgetPanel {
+  background: #f3f6fa;
+}
+
+.agentWidgetMessages {
+  background: transparent;
+}
+
+.agentWidgetMessages::before {
+  display: none;
+}
+
+.agentWidgetForm {
+  background: #f3f6fa;
+}
+/* Agent header/body separation */
+.agentWidgetPanel::before {
+  height: 108px;
+}
+
+.agentWidgetMessages,
+.agentWidgetForm {
+  background: #f3f6fa;
+}
