@@ -1,0 +1,1269 @@
+- generic [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e7]:
+        - paragraph [ref=e8]: Scale Technics
+        - heading "MMCD Intelligence Workspace" [level=1] [ref=e9]
+        - paragraph [ref=e10]: Search specs, inspect pages, and verify answers against the source.
+      - generic [ref=e11]:
+        - generic [ref=e12]: Keyword
+        - searchbox "Keyword" [ref=e13]: admin
+        - button "Source SMMCD" [ref=e15] [cursor=pointer]:
+          - generic [ref=e16]: Source
+          - generic [ref=e17]: SMMCD
+          - img [ref=e19]
+        - generic "Search mode" [ref=e21]:
+          - button "Exact" [ref=e22] [cursor=pointer]
+          - button "Fuzzy" [ref=e23] [cursor=pointer]
+        - button "Search" [active] [ref=e69] [cursor=pointer]
+    - generic [ref=e25]:
+      - complementary [ref=e26]:
+        - generic [ref=e27]:
+          - generic [ref=e28]: Keyword retrieval
+          - heading "88 matches" [level=2] [ref=e70]
+          - paragraph [ref=e30]: Ranked evidence from SMMCD.
+        - list [ref=e71]:
+          - listitem [ref=e72]:
+            - generic [ref=e74]: P.SGC PAGE 1
+            - generic [ref=e75]:
+              - paragraph [ref=e76]: SUPPLEMENTARY GENERAL CONDITIONS
+              - paragraph [ref=e77]: SMMCD / Part -
+            - paragraph [ref=e78]:
+              - text: as determined by the Contract
+              - mark [ref=e79]: Admin
+              - text: istrator,
+            - generic [ref=e80]:
+              - generic "Result metadata" [ref=e81]:
+                - generic [ref=e82]: Page SGC PAGE 1
+                - generic [ref=e83]: Part -
+              - button "Open page" [ref=e84] [cursor=pointer]
+          - listitem [ref=e85]:
+            - generic [ref=e87]: P.SGC PAGE 4
+            - generic [ref=e88]:
+              - paragraph [ref=e89]: SUPPLEMENTARY GENERAL CONDITIONS
+              - paragraph [ref=e90]: SMMCD / Part -
+            - paragraph [ref=e91]:
+              - text: Contract
+              - mark [ref=e92]: Admin
+              - text: istrator
+            - generic [ref=e93]:
+              - generic "Result metadata" [ref=e94]:
+                - generic [ref=e95]: Page SGC PAGE 4
+                - generic [ref=e96]: Part -
+              - button "Open page" [ref=e97] [cursor=pointer]
+          - listitem [ref=e98]:
+            - generic [ref=e100]: P.SGC PAGE 4
+            - generic [ref=e101]:
+              - paragraph [ref=e102]: SUPPLEMENTARY GENERAL CONDITIONS
+              - paragraph [ref=e103]: SMMCD / Part -
+            - paragraph [ref=e104]:
+              - text: Contract
+              - mark [ref=e105]: Admin
+              - text: istrator.
+            - generic [ref=e106]:
+              - generic "Result metadata" [ref=e107]:
+                - generic [ref=e108]: Page SGC PAGE 4
+                - generic [ref=e109]: Part -
+              - button "Open page" [ref=e110] [cursor=pointer]
+          - listitem [ref=e111]:
+            - generic [ref=e113]: P.SGC PAGE 4
+            - generic [ref=e114]:
+              - paragraph [ref=e115]: SUPPLEMENTARY GENERAL CONDITIONS
+              - paragraph [ref=e116]: SMMCD / Part -
+            - paragraph [ref=e117]:
+              - text: Contact
+              - mark [ref=e118]: Admin
+              - text: istrator
+            - generic [ref=e119]:
+              - generic "Result metadata" [ref=e120]:
+                - generic [ref=e121]: Page SGC PAGE 4
+                - generic [ref=e122]: Part -
+              - button "Open page" [ref=e123] [cursor=pointer]
+          - listitem [ref=e124]:
+            - generic [ref=e126]: P.SGC PAGE 7
+            - generic [ref=e127]:
+              - paragraph [ref=e128]: SUPPLEMENTARY GENERAL CONDITIONS
+              - paragraph [ref=e129]: SMMCD / Part -
+            - paragraph [ref=e130]:
+              - text: Contract
+              - mark [ref=e131]: Admin
+              - text: istrator
+            - generic [ref=e132]:
+              - generic "Result metadata" [ref=e133]:
+                - generic [ref=e134]: Page SGC PAGE 7
+                - generic [ref=e135]: Part -
+              - button "Open page" [ref=e136] [cursor=pointer]
+          - listitem [ref=e137]:
+            - generic [ref=e139]: P.SGC PAGE 7
+            - generic [ref=e140]:
+              - paragraph [ref=e141]: SUPPLEMENTARY GENERAL CONDITIONS
+              - paragraph [ref=e142]: SMMCD / Part -
+            - paragraph [ref=e143]:
+              - mark [ref=e144]: Admin
+              - text: istrator
+            - generic [ref=e145]:
+              - generic "Result metadata" [ref=e146]:
+                - generic [ref=e147]: Page SGC PAGE 7
+                - generic [ref=e148]: Part -
+              - button "Open page" [ref=e149] [cursor=pointer]
+          - listitem [ref=e150]:
+            - generic [ref=e152]: P.SGC PAGE 7
+            - generic [ref=e153]:
+              - paragraph [ref=e154]: SUPPLEMENTARY GENERAL CONDITIONS
+              - paragraph [ref=e155]: SMMCD / Part -
+            - paragraph [ref=e156]:
+              - text: Contract
+              - mark [ref=e157]: Admin
+              - text: istrator
+            - generic [ref=e158]:
+              - generic "Result metadata" [ref=e159]:
+                - generic [ref=e160]: Page SGC PAGE 7
+                - generic [ref=e161]: Part -
+              - button "Open page" [ref=e162] [cursor=pointer]
+          - listitem [ref=e163]:
+            - generic [ref=e165]: P.SGC PAGE 8
+            - generic [ref=e166]:
+              - paragraph [ref=e167]: SUPPLEMENTARY GENERAL CONDITIONS
+              - paragraph [ref=e168]: SMMCD / Part -
+            - paragraph [ref=e169]:
+              - text: Contract
+              - mark [ref=e170]: Admin
+              - text: istrator,
+            - generic [ref=e171]:
+              - generic "Result metadata" [ref=e172]:
+                - generic [ref=e173]: Page SGC PAGE 8
+                - generic [ref=e174]: Part -
+              - button "Open page" [ref=e175] [cursor=pointer]
+          - listitem [ref=e176]:
+            - generic [ref=e178]: P.SGC PAGE 9
+            - generic [ref=e179]:
+              - paragraph [ref=e180]: SUPPLEMENTARY GENERAL CONDITIONS
+              - paragraph [ref=e181]: SMMCD / Part -
+            - paragraph [ref=e182]:
+              - mark [ref=e183]: Admin
+              - text: istrator
+            - generic [ref=e184]:
+              - generic "Result metadata" [ref=e185]:
+                - generic [ref=e186]: Page SGC PAGE 9
+                - generic [ref=e187]: Part -
+              - button "Open page" [ref=e188] [cursor=pointer]
+          - listitem [ref=e189]:
+            - generic [ref=e191]: P.SGC PAGE 9
+            - generic [ref=e192]:
+              - paragraph [ref=e193]: SUPPLEMENTARY GENERAL CONDITIONS
+              - paragraph [ref=e194]: SMMCD / Part -
+            - paragraph [ref=e195]:
+              - text: Contract
+              - mark [ref=e196]: Admin
+              - text: istrator
+            - generic [ref=e197]:
+              - generic "Result metadata" [ref=e198]:
+                - generic [ref=e199]: Page SGC PAGE 9
+                - generic [ref=e200]: Part -
+              - button "Open page" [ref=e201] [cursor=pointer]
+          - listitem [ref=e202]:
+            - generic [ref=e204]: P.SGC PAGE 9
+            - generic [ref=e205]:
+              - paragraph [ref=e206]: SUPPLEMENTARY GENERAL CONDITIONS
+              - paragraph [ref=e207]: SMMCD / Part -
+            - paragraph [ref=e208]:
+              - mark [ref=e209]: Admin
+              - text: istrator.
+            - generic [ref=e210]:
+              - generic "Result metadata" [ref=e211]:
+                - generic [ref=e212]: Page SGC PAGE 9
+                - generic [ref=e213]: Part -
+              - button "Open page" [ref=e214] [cursor=pointer]
+          - listitem [ref=e215]:
+            - generic [ref=e217]: P.SGC PAGE 9
+            - generic [ref=e218]:
+              - paragraph [ref=e219]: SUPPLEMENTARY GENERAL CONDITIONS
+              - paragraph [ref=e220]: SMMCD / Part -
+            - paragraph [ref=e221]:
+              - text: Contract
+              - mark [ref=e222]: Admin
+              - text: istrator
+            - generic [ref=e223]:
+              - generic "Result metadata" [ref=e224]:
+                - generic [ref=e225]: Page SGC PAGE 9
+                - generic [ref=e226]: Part -
+              - button "Open page" [ref=e227] [cursor=pointer]
+          - listitem [ref=e228]:
+            - generic [ref=e230]: P.SGC PAGE 9
+            - generic [ref=e231]:
+              - paragraph [ref=e232]: SUPPLEMENTARY GENERAL CONDITIONS
+              - paragraph [ref=e233]: SMMCD / Part -
+            - paragraph [ref=e234]:
+              - mark [ref=e235]: Admin
+              - text: istrator
+            - generic [ref=e236]:
+              - generic "Result metadata" [ref=e237]:
+                - generic [ref=e238]: Page SGC PAGE 9
+                - generic [ref=e239]: Part -
+              - button "Open page" [ref=e240] [cursor=pointer]
+          - listitem [ref=e241]:
+            - generic [ref=e243]: P.SGC PAGE 9
+            - generic [ref=e244]:
+              - paragraph [ref=e245]: SUPPLEMENTARY GENERAL CONDITIONS
+              - paragraph [ref=e246]: SMMCD / Part -
+            - paragraph [ref=e247]:
+              - mark [ref=e248]: Admin
+              - text: istrator
+            - generic [ref=e249]:
+              - generic "Result metadata" [ref=e250]:
+                - generic [ref=e251]: Page SGC PAGE 9
+                - generic [ref=e252]: Part -
+              - button "Open page" [ref=e253] [cursor=pointer]
+          - listitem [ref=e254]:
+            - generic [ref=e256]: P.SGC PAGE 10
+            - generic [ref=e257]:
+              - paragraph [ref=e258]: SUPPLEMENTARY GENERAL CONDITIONS
+              - paragraph [ref=e259]: SMMCD / Part -
+            - paragraph [ref=e260]:
+              - text: Office/
+              - mark [ref=e261]: Admin
+              - text: istration Staff are
+            - generic [ref=e262]:
+              - generic "Result metadata" [ref=e263]:
+                - generic [ref=e264]: Page SGC PAGE 10
+                - generic [ref=e265]: Part -
+              - button "Open page" [ref=e266] [cursor=pointer]
+          - listitem [ref=e267]:
+            - generic [ref=e269]: P.SGC PAGE 10
+            - generic [ref=e270]:
+              - paragraph [ref=e271]: SUPPLEMENTARY GENERAL CONDITIONS
+              - paragraph [ref=e272]: SMMCD / Part -
+            - paragraph [ref=e273]:
+              - mark [ref=e274]: Admin
+              - text: istrator
+            - generic [ref=e275]:
+              - generic "Result metadata" [ref=e276]:
+                - generic [ref=e277]: Page SGC PAGE 10
+                - generic [ref=e278]: Part -
+              - button "Open page" [ref=e279] [cursor=pointer]
+          - listitem [ref=e280]:
+            - generic [ref=e282]: P.SGC PAGE 11
+            - generic [ref=e283]:
+              - paragraph [ref=e284]: SUPPLEMENTARY GENERAL CONDITIONS
+              - paragraph [ref=e285]: SMMCD / Part -
+            - paragraph [ref=e286]:
+              - text: Contract
+              - mark [ref=e287]: Admin
+              - text: istrator
+            - generic [ref=e288]:
+              - generic "Result metadata" [ref=e289]:
+                - generic [ref=e290]: Page SGC PAGE 11
+                - generic [ref=e291]: Part -
+              - button "Open page" [ref=e292] [cursor=pointer]
+          - listitem [ref=e293]:
+            - generic [ref=e295]: P.SGC PAGE 12
+            - generic [ref=e296]:
+              - paragraph [ref=e297]: SUPPLEMENTARY GENERAL CONDITIONS
+              - paragraph [ref=e298]: SMMCD / Part -
+            - paragraph [ref=e299]:
+              - text: Contract
+              - mark [ref=e300]: Admin
+              - text: istrator
+            - generic [ref=e301]:
+              - generic "Result metadata" [ref=e302]:
+                - generic [ref=e303]: Page SGC PAGE 12
+                - generic [ref=e304]: Part -
+              - button "Open page" [ref=e305] [cursor=pointer]
+          - listitem [ref=e306]:
+            - generic [ref=e308]: P.SGC PAGE 12
+            - generic [ref=e309]:
+              - paragraph [ref=e310]: SUPPLEMENTARY GENERAL CONDITIONS
+              - paragraph [ref=e311]: SMMCD / Part -
+            - paragraph [ref=e312]:
+              - text: Contract
+              - mark [ref=e313]: Admin
+              - text: istrator
+            - generic [ref=e314]:
+              - generic "Result metadata" [ref=e315]:
+                - generic [ref=e316]: Page SGC PAGE 12
+                - generic [ref=e317]: Part -
+              - button "Open page" [ref=e318] [cursor=pointer]
+          - listitem [ref=e319]:
+            - generic [ref=e321]: P.SGC PAGE 12
+            - generic [ref=e322]:
+              - paragraph [ref=e323]: SUPPLEMENTARY GENERAL CONDITIONS
+              - paragraph [ref=e324]: SMMCD / Part -
+            - paragraph [ref=e325]:
+              - mark [ref=e326]: Admin
+              - text: istrator
+            - generic [ref=e327]:
+              - generic "Result metadata" [ref=e328]:
+                - generic [ref=e329]: Page SGC PAGE 12
+                - generic [ref=e330]: Part -
+              - button "Open page" [ref=e331] [cursor=pointer]
+          - listitem [ref=e332]:
+            - generic [ref=e334]: P.SGC PAGE 12
+            - generic [ref=e335]:
+              - paragraph [ref=e336]: SUPPLEMENTARY GENERAL CONDITIONS
+              - paragraph [ref=e337]: SMMCD / Part -
+            - paragraph [ref=e338]:
+              - mark [ref=e339]: Admin
+              - text: istrator
+            - generic [ref=e340]:
+              - generic "Result metadata" [ref=e341]:
+                - generic [ref=e342]: Page SGC PAGE 12
+                - generic [ref=e343]: Part -
+              - button "Open page" [ref=e344] [cursor=pointer]
+          - listitem [ref=e345]:
+            - generic [ref=e347]: P.SGC PAGE 12
+            - generic [ref=e348]:
+              - paragraph [ref=e349]: SUPPLEMENTARY GENERAL CONDITIONS
+              - paragraph [ref=e350]: SMMCD / Part -
+            - paragraph [ref=e351]:
+              - mark [ref=e352]: Admin
+              - text: istrator and their field
+            - generic [ref=e353]:
+              - generic "Result metadata" [ref=e354]:
+                - generic [ref=e355]: Page SGC PAGE 12
+                - generic [ref=e356]: Part -
+              - button "Open page" [ref=e357] [cursor=pointer]
+          - listitem [ref=e358]:
+            - generic [ref=e360]: P.SGC PAGE 14
+            - generic [ref=e361]:
+              - paragraph [ref=e362]: SUPPLEMENTARY GENERAL CONDITIONS
+              - paragraph [ref=e363]: SMMCD / Part -
+            - paragraph [ref=e364]:
+              - text: Contract
+              - mark [ref=e365]: Admin
+              - text: istrator
+            - generic [ref=e366]:
+              - generic "Result metadata" [ref=e367]:
+                - generic [ref=e368]: Page SGC PAGE 14
+                - generic [ref=e369]: Part -
+              - button "Open page" [ref=e370] [cursor=pointer]
+          - listitem [ref=e371]:
+            - generic [ref=e373]: P.SGC PAGE 14
+            - generic [ref=e374]:
+              - paragraph [ref=e375]: SUPPLEMENTARY GENERAL CONDITIONS
+              - paragraph [ref=e376]: SMMCD / Part -
+            - paragraph [ref=e377]:
+              - mark [ref=e378]: Admin
+              - text: istrator
+            - generic [ref=e379]:
+              - generic "Result metadata" [ref=e380]:
+                - generic [ref=e381]: Page SGC PAGE 14
+                - generic [ref=e382]: Part -
+              - button "Open page" [ref=e383] [cursor=pointer]
+          - listitem [ref=e384]:
+            - generic [ref=e386]: P.SGC PAGE 14
+            - generic [ref=e387]:
+              - paragraph [ref=e388]: SUPPLEMENTARY GENERAL CONDITIONS
+              - paragraph [ref=e389]: SMMCD / Part -
+            - paragraph [ref=e390]:
+              - mark [ref=e391]: Admin
+              - text: istrator
+            - generic [ref=e392]:
+              - generic "Result metadata" [ref=e393]:
+                - generic [ref=e394]: Page SGC PAGE 14
+                - generic [ref=e395]: Part -
+              - button "Open page" [ref=e396] [cursor=pointer]
+          - listitem [ref=e397]:
+            - generic [ref=e399]: P.SGC PAGE 15
+            - generic [ref=e400]:
+              - paragraph [ref=e401]: SUPPLEMENTARY GENERAL CONDITIONS
+              - paragraph [ref=e402]: SMMCD / Part -
+            - paragraph [ref=e403]:
+              - mark [ref=e404]: Admin
+              - text: istrator
+            - generic [ref=e405]:
+              - generic "Result metadata" [ref=e406]:
+                - generic [ref=e407]: Page SGC PAGE 15
+                - generic [ref=e408]: Part -
+              - button "Open page" [ref=e409] [cursor=pointer]
+          - listitem [ref=e410]:
+            - generic [ref=e412]: P.SGC PAGE 20
+            - generic [ref=e413]:
+              - paragraph [ref=e414]: SUPPLEMENTARY GENERAL CONDITIONS
+              - paragraph [ref=e415]: SMMCD / Part -
+            - paragraph [ref=e416]:
+              - text: and agents, and the Contract
+              - mark [ref=e417]: Admin
+              - text: istrator,
+            - generic [ref=e418]:
+              - generic "Result metadata" [ref=e419]:
+                - generic [ref=e420]: Page SGC PAGE 20
+                - generic [ref=e421]: Part -
+              - button "Open page" [ref=e422] [cursor=pointer]
+          - listitem [ref=e423]:
+            - generic [ref=e425]: P.SGC PAGE 20
+            - generic [ref=e426]:
+              - paragraph [ref=e427]: SUPPLEMENTARY GENERAL CONDITIONS
+              - paragraph [ref=e428]: SMMCD / Part -
+            - paragraph [ref=e429]:
+              - mark [ref=e430]: Admin
+              - text: istrator
+            - generic [ref=e431]:
+              - generic "Result metadata" [ref=e432]:
+                - generic [ref=e433]: Page SGC PAGE 20
+                - generic [ref=e434]: Part -
+              - button "Open page" [ref=e435] [cursor=pointer]
+          - listitem [ref=e436]:
+            - generic [ref=e438]: P.SGC PAGE 23
+            - generic [ref=e439]:
+              - paragraph [ref=e440]: SUPPLEMENTARY GENERAL CONDITIONS
+              - paragraph [ref=e441]: SMMCD / Part -
+            - paragraph [ref=e442]:
+              - text: Contract
+              - mark [ref=e443]: Admin
+              - text: istrator
+            - generic [ref=e444]:
+              - generic "Result metadata" [ref=e445]:
+                - generic [ref=e446]: Page SGC PAGE 23
+                - generic [ref=e447]: Part -
+              - button "Open page" [ref=e448] [cursor=pointer]
+          - listitem [ref=e449]:
+            - generic [ref=e451]: P.SS PAGE 1
+            - generic [ref=e452]:
+              - paragraph [ref=e453]: PROJECT RECORD DOCUMENTS
+              - paragraph [ref=e454]: SMMCD / Part -
+            - paragraph [ref=e455]:
+              - text: Contract
+              - mark [ref=e456]: Admin
+              - text: "istrator, that identifies: design"
+            - generic [ref=e457]:
+              - generic "Result metadata" [ref=e458]:
+                - generic [ref=e459]: Page SS PAGE 1
+                - generic [ref=e460]: Part -
+              - button "Open page" [ref=e461] [cursor=pointer]
+          - listitem [ref=e462]:
+            - generic [ref=e464]: P.SS PAGE 3
+            - generic [ref=e465]:
+              - paragraph [ref=e466]: START-UP, TESTING AND COMMISSIONING
+              - paragraph [ref=e467]: SMMCD / Part -
+            - paragraph [ref=e468]:
+              - mark [ref=e469]: Admin
+              - text: istrator
+            - generic [ref=e470]:
+              - generic "Result metadata" [ref=e471]:
+                - generic [ref=e472]: Page SS PAGE 3
+                - generic [ref=e473]: Part -
+              - button "Open page" [ref=e474] [cursor=pointer]
+          - listitem [ref=e475]:
+            - generic [ref=e477]: P.SS PAGE 4
+            - generic [ref=e478]:
+              - paragraph [ref=e479]: START-UP, TESTING AND COMMISSIONING
+              - paragraph [ref=e480]: SMMCD / Part -
+            - paragraph [ref=e481]:
+              - text: The Contract
+              - mark [ref=e482]: Admin
+              - text: istrator and the City will
+            - generic [ref=e483]:
+              - generic "Result metadata" [ref=e484]:
+                - generic [ref=e485]: Page SS PAGE 4
+                - generic [ref=e486]: Part -
+              - button "Open page" [ref=e487] [cursor=pointer]
+          - listitem [ref=e488]:
+            - generic [ref=e490]: P.SS PAGE 4
+            - generic [ref=e491]:
+              - paragraph [ref=e492]: START-UP, TESTING AND COMMISSIONING
+              - paragraph [ref=e493]: SMMCD / Part -
+            - paragraph [ref=e494]:
+              - mark [ref=e495]: Admin
+              - text: istrator’s
+            - generic [ref=e496]:
+              - generic "Result metadata" [ref=e497]:
+                - generic [ref=e498]: Page SS PAGE 4
+                - generic [ref=e499]: Part -
+              - button "Open page" [ref=e500] [cursor=pointer]
+          - listitem [ref=e501]:
+            - generic [ref=e503]: P.SS PAGE 4
+            - generic [ref=e504]:
+              - paragraph [ref=e505]: START-UP, TESTING AND COMMISSIONING
+              - paragraph [ref=e506]: SMMCD / Part -
+            - paragraph [ref=e507]:
+              - text: Contract
+              - mark [ref=e508]: Admin
+              - text: istrator and the City two weeks
+            - generic [ref=e509]:
+              - generic "Result metadata" [ref=e510]:
+                - generic [ref=e511]: Page SS PAGE 4
+                - generic [ref=e512]: Part -
+              - button "Open page" [ref=e513] [cursor=pointer]
+          - listitem [ref=e514]:
+            - generic [ref=e516]: P.SS PAGE 4
+            - generic [ref=e517]:
+              - paragraph [ref=e518]: START-UP, TESTING AND COMMISSIONING
+              - paragraph [ref=e519]: SMMCD / Part -
+            - paragraph [ref=e520]:
+              - text: The Contract
+              - mark [ref=e521]: Admin
+              - text: istrator may order any
+            - generic [ref=e522]:
+              - generic "Result metadata" [ref=e523]:
+                - generic [ref=e524]: Page SS PAGE 4
+                - generic [ref=e525]: Part -
+              - button "Open page" [ref=e526] [cursor=pointer]
+          - listitem [ref=e527]:
+            - generic [ref=e529]: P.SS PAGE 5
+            - generic [ref=e530]:
+              - paragraph [ref=e531]: START-UP, TESTING AND COMMISSIONING
+              - paragraph [ref=e532]: SMMCD / Part -
+            - paragraph [ref=e533]:
+              - text: Contract
+              - mark [ref=e534]: Admin
+              - text: istrator, City and Contractor
+            - generic [ref=e535]:
+              - generic "Result metadata" [ref=e536]:
+                - generic [ref=e537]: Page SS PAGE 5
+                - generic [ref=e538]: Part -
+              - button "Open page" [ref=e539] [cursor=pointer]
+          - listitem [ref=e540]:
+            - generic [ref=e542]: P.SS PAGE 5
+            - generic [ref=e543]:
+              - paragraph [ref=e544]: START-UP, TESTING AND COMMISSIONING
+              - paragraph [ref=e545]: SMMCD / Part -
+            - paragraph [ref=e546]:
+              - mark [ref=e547]: Admin
+              - text: istrator and Owner.
+            - generic [ref=e548]:
+              - generic "Result metadata" [ref=e549]:
+                - generic [ref=e550]: Page SS PAGE 5
+                - generic [ref=e551]: Part -
+              - button "Open page" [ref=e552] [cursor=pointer]
+          - listitem [ref=e553]:
+            - generic [ref=e555]: P.SS PAGE 6
+            - generic [ref=e556]:
+              - paragraph [ref=e557]: START-UP, TESTING AND COMMISSIONING
+              - paragraph [ref=e558]: SMMCD / Part -
+            - paragraph [ref=e559]:
+              - mark [ref=e560]: Admin
+              - text: istrator and the City, the
+            - generic [ref=e561]:
+              - generic "Result metadata" [ref=e562]:
+                - generic [ref=e563]: Page SS PAGE 6
+                - generic [ref=e564]: Part -
+              - button "Open page" [ref=e565] [cursor=pointer]
+          - listitem [ref=e566]:
+            - generic [ref=e568]: P.SS PAGE 7
+            - generic [ref=e569]:
+              - paragraph [ref=e570]: START-UP, TESTING AND COMMISSIONING
+              - paragraph [ref=e571]: SMMCD / Part -
+            - paragraph [ref=e572]:
+              - mark [ref=e573]: Admin
+              - text: istrator
+            - generic [ref=e574]:
+              - generic "Result metadata" [ref=e575]:
+                - generic [ref=e576]: Page SS PAGE 7
+                - generic [ref=e577]: Part -
+              - button "Open page" [ref=e578] [cursor=pointer]
+          - listitem [ref=e579]:
+            - generic [ref=e581]: P.SS PAGE 7
+            - generic [ref=e582]:
+              - paragraph [ref=e583]: START-UP, TESTING AND COMMISSIONING
+              - paragraph [ref=e584]: SMMCD / Part -
+            - paragraph [ref=e585]:
+              - mark [ref=e586]: Admin
+              - text: istrator and the
+            - generic [ref=e587]:
+              - generic "Result metadata" [ref=e588]:
+                - generic [ref=e589]: Page SS PAGE 7
+                - generic [ref=e590]: Part -
+              - button "Open page" [ref=e591] [cursor=pointer]
+          - listitem [ref=e592]:
+            - generic [ref=e594]: P.SS PAGE 7
+            - generic [ref=e595]:
+              - paragraph [ref=e596]: START-UP, TESTING AND COMMISSIONING
+              - paragraph [ref=e597]: SMMCD / Part -
+            - paragraph [ref=e598]:
+              - mark [ref=e599]: Admin
+              - text: istrator and City, the City will assume
+            - generic [ref=e600]:
+              - generic "Result metadata" [ref=e601]:
+                - generic [ref=e602]: Page SS PAGE 7
+                - generic [ref=e603]: Part -
+              - button "Open page" [ref=e604] [cursor=pointer]
+          - listitem [ref=e605]:
+            - generic [ref=e607]: P.SS PAGE 9
+            - generic [ref=e608]:
+              - paragraph [ref=e609]: TRAFFIC CONTROL, VEHICLE ACCESS AND PARKING
+              - paragraph [ref=e610]: SMMCD / Part -
+            - paragraph [ref=e611]:
+              - text: Contract
+              - mark [ref=e612]: Admin
+              - text: istrator
+            - generic [ref=e613]:
+              - generic "Result metadata" [ref=e614]:
+                - generic [ref=e615]: Page SS PAGE 9
+                - generic [ref=e616]: Part -
+              - button "Open page" [ref=e617] [cursor=pointer]
+          - listitem [ref=e618]:
+            - generic [ref=e620]: P.SS PAGE 11
+            - generic [ref=e621]:
+              - paragraph [ref=e622]: TRAFFIC CONTROL, VEHICLE ACCESS AND PARKING
+              - paragraph [ref=e623]: SMMCD / Part -
+            - paragraph [ref=e624]:
+              - mark [ref=e625]: Admin
+              - text: "istrator:"
+            - generic [ref=e626]:
+              - generic "Result metadata" [ref=e627]:
+                - generic [ref=e628]: Page SS PAGE 11
+                - generic [ref=e629]: Part -
+              - button "Open page" [ref=e630] [cursor=pointer]
+          - listitem [ref=e631]:
+            - generic [ref=e633]: P.SS PAGE 13
+            - generic [ref=e634]:
+              - paragraph [ref=e635]: TRAFFIC CONTROL, VEHICLE ACCESS AND PARKING
+              - paragraph [ref=e636]: SMMCD / Part -
+            - paragraph [ref=e637]:
+              - mark [ref=e638]: Admin
+              - text: istrator,
+            - generic [ref=e639]:
+              - generic "Result metadata" [ref=e640]:
+                - generic [ref=e641]: Page SS PAGE 13
+                - generic [ref=e642]: Part -
+              - button "Open page" [ref=e643] [cursor=pointer]
+          - listitem [ref=e644]:
+            - generic [ref=e646]: P.SS PAGE 13
+            - generic [ref=e647]:
+              - paragraph [ref=e648]: TRAFFIC CONTROL, VEHICLE ACCESS AND PARKING
+              - paragraph [ref=e649]: SMMCD / Part -
+            - paragraph [ref=e650]:
+              - mark [ref=e651]: Admin
+              - text: istrator
+            - generic [ref=e652]:
+              - generic "Result metadata" [ref=e653]:
+                - generic [ref=e654]: Page SS PAGE 13
+                - generic [ref=e655]: Part -
+              - button "Open page" [ref=e656] [cursor=pointer]
+          - listitem [ref=e657]:
+            - generic [ref=e659]: P.SS PAGE 15
+            - generic [ref=e660]:
+              - paragraph [ref=e661]: ENVIRONMENTAL PROTECTION
+              - paragraph [ref=e662]: SMMCD / Part -
+            - paragraph [ref=e663]:
+              - mark [ref=e664]: Admin
+              - text: istrator, mitigation measures, such as
+            - generic [ref=e665]:
+              - generic "Result metadata" [ref=e666]:
+                - generic [ref=e667]: Page SS PAGE 15
+                - generic [ref=e668]: Part -
+              - button "Open page" [ref=e669] [cursor=pointer]
+          - listitem [ref=e670]:
+            - generic [ref=e672]: P.SS PAGE 16
+            - generic [ref=e673]:
+              - paragraph [ref=e674]: ENVIRONMENTAL PROTECTION
+              - paragraph [ref=e675]: SMMCD / Part -
+            - paragraph [ref=e676]:
+              - mark [ref=e677]: Admin
+              - text: istrator,
+            - generic [ref=e678]:
+              - generic "Result metadata" [ref=e679]:
+                - generic [ref=e680]: Page SS PAGE 16
+                - generic [ref=e681]: Part -
+              - button "Open page" [ref=e682] [cursor=pointer]
+          - listitem [ref=e683]:
+            - generic [ref=e685]: P.SS PAGE 17
+            - generic [ref=e686]:
+              - paragraph [ref=e687]: ENVIRONMENTAL PROTECTION
+              - paragraph [ref=e688]: SMMCD / Part -
+            - paragraph [ref=e689]:
+              - text: If requested by the Contract
+              - mark [ref=e690]: Admin
+              - text: istrator, the
+            - generic [ref=e691]:
+              - generic "Result metadata" [ref=e692]:
+                - generic [ref=e693]: Page SS PAGE 17
+                - generic [ref=e694]: Part -
+              - button "Open page" [ref=e695] [cursor=pointer]
+          - listitem [ref=e696]:
+            - generic [ref=e698]: P.SS PAGE 17
+            - generic [ref=e699]:
+              - paragraph [ref=e700]: ENVIRONMENTAL PROTECTION
+              - paragraph [ref=e701]: SMMCD / Part -
+            - paragraph [ref=e702]:
+              - text: Diversion Plan to the Contract
+              - mark [ref=e703]: Admin
+              - text: istrator
+            - generic [ref=e704]:
+              - generic "Result metadata" [ref=e705]:
+                - generic [ref=e706]: Page SS PAGE 17
+                - generic [ref=e707]: Part -
+              - button "Open page" [ref=e708] [cursor=pointer]
+          - listitem [ref=e709]:
+            - generic [ref=e711]: P.SS PAGE 19
+            - generic [ref=e712]:
+              - paragraph [ref=e713]: ENVIRONMENTAL PROTECTION
+              - paragraph [ref=e714]: SMMCD / Part -
+            - paragraph [ref=e715]:
+              - mark [ref=e716]: Admin
+              - text: istrator
+            - generic [ref=e717]:
+              - generic "Result metadata" [ref=e718]:
+                - generic [ref=e719]: Page SS PAGE 19
+                - generic [ref=e720]: Part -
+              - button "Open page" [ref=e721] [cursor=pointer]
+          - listitem [ref=e722]:
+            - generic [ref=e724]: P.SS PAGE 35
+            - generic [ref=e725]:
+              - paragraph [ref=e726]: CONCRETE WALKS, CURBS AND GUTTERS
+              - paragraph [ref=e727]: SMMCD / Part -
+            - paragraph [ref=e728]:
+              - mark [ref=e729]: Admin
+              - text: istrator, the Contractor may install an
+            - generic [ref=e730]:
+              - generic "Result metadata" [ref=e731]:
+                - generic [ref=e732]: Page SS PAGE 35
+                - generic [ref=e733]: Part -
+              - button "Open page" [ref=e734] [cursor=pointer]
+          - listitem [ref=e735]:
+            - generic [ref=e737]: P.SS PAGE 37
+            - generic [ref=e738]:
+              - paragraph [ref=e739]: CONDUITS FOR COMMUNICATION NETWORK
+              - paragraph [ref=e740]: SMMCD / Part -
+            - paragraph [ref=e741]:
+              - text: be submitted to the Contract
+              - mark [ref=e742]: Admin
+              - text: istrato
+            - generic [ref=e743]:
+              - generic "Result metadata" [ref=e744]:
+                - generic [ref=e745]: Page SS PAGE 37
+                - generic [ref=e746]: Part -
+              - button "Open page" [ref=e747] [cursor=pointer]
+          - listitem [ref=e748]:
+            - generic [ref=e750]: P.SS PAGE 38
+            - generic [ref=e751]:
+              - paragraph [ref=e752]: CONDUITS FOR COMMUNICATION NETWORK
+              - paragraph [ref=e753]: SMMCD / Part -
+            - paragraph [ref=e754]:
+              - mark [ref=e755]: Admin
+              - text: istrator.
+            - generic [ref=e756]:
+              - generic "Result metadata" [ref=e757]:
+                - generic [ref=e758]: Page SS PAGE 38
+                - generic [ref=e759]: Part -
+              - button "Open page" [ref=e760] [cursor=pointer]
+          - listitem [ref=e761]:
+            - generic [ref=e763]: P.SS PAGE 38
+            - generic [ref=e764]:
+              - paragraph [ref=e765]: CONDUITS FOR COMMUNICATION NETWORK
+              - paragraph [ref=e766]: SMMCD / Part -
+            - paragraph [ref=e767]:
+              - text: to satisfaction of Contract
+              - mark [ref=e768]: Admin
+              - text: istrator.
+            - generic [ref=e769]:
+              - generic "Result metadata" [ref=e770]:
+                - generic [ref=e771]: Page SS PAGE 38
+                - generic [ref=e772]: Part -
+              - button "Open page" [ref=e773] [cursor=pointer]
+          - listitem [ref=e774]:
+            - generic [ref=e776]: P.SS PAGE 45
+            - generic [ref=e777]:
+              - paragraph [ref=e778]: SHRUB AND TREE PRESERVATION
+              - paragraph [ref=e779]: SMMCD / Part -
+            - paragraph [ref=e780]:
+              - mark [ref=e781]: Admin
+              - text: istrator,
+            - generic [ref=e782]:
+              - generic "Result metadata" [ref=e783]:
+                - generic [ref=e784]: Page SS PAGE 45
+                - generic [ref=e785]: Part -
+              - button "Open page" [ref=e786] [cursor=pointer]
+          - listitem [ref=e787]:
+            - generic [ref=e789]: P.SS PAGE 46
+            - generic [ref=e790]:
+              - paragraph [ref=e791]: DUST CONTROL
+              - paragraph [ref=e792]: SMMCD / Part -
+            - paragraph [ref=e793]:
+              - mark [ref=e794]: Admin
+              - text: istrator
+            - generic [ref=e795]:
+              - generic "Result metadata" [ref=e796]:
+                - generic [ref=e797]: Page SS PAGE 46
+                - generic [ref=e798]: Part -
+              - button "Open page" [ref=e799] [cursor=pointer]
+          - listitem [ref=e800]:
+            - generic [ref=e802]: P.SS PAGE 48
+            - generic [ref=e803]:
+              - paragraph [ref=e804]: EXCAVATING, TRENCHING AND BACKFILLING
+              - paragraph [ref=e805]: SMMCD / Part -
+            - paragraph [ref=e806]:
+              - text: than one Contract
+              - mark [ref=e807]: Admin
+              - text: istrator
+            - generic [ref=e808]:
+              - generic "Result metadata" [ref=e809]:
+                - generic [ref=e810]: Page SS PAGE 48
+                - generic [ref=e811]: Part -
+              - button "Open page" [ref=e812] [cursor=pointer]
+          - listitem [ref=e813]:
+            - generic [ref=e815]: P.SS PAGE 48
+            - generic [ref=e816]:
+              - paragraph [ref=e817]: EXCAVATING, TRENCHING AND BACKFILLING
+              - paragraph [ref=e818]: SMMCD / Part -
+            - paragraph [ref=e819]:
+              - mark [ref=e820]: Admin
+              - text: istrator.
+            - generic [ref=e821]:
+              - generic "Result metadata" [ref=e822]:
+                - generic [ref=e823]: Page SS PAGE 48
+                - generic [ref=e824]: Part -
+              - button "Open page" [ref=e825] [cursor=pointer]
+          - listitem [ref=e826]:
+            - generic [ref=e828]: P.SS PAGE 49
+            - generic [ref=e829]:
+              - paragraph [ref=e830]: EXCAVATING, TRENCHING AND BACKFILLING
+              - paragraph [ref=e831]: SMMCD / Part -
+            - paragraph [ref=e832]:
+              - text: The Contract
+              - mark [ref=e833]: Admin
+              - text: istrator and Owner may
+            - generic [ref=e834]:
+              - generic "Result metadata" [ref=e835]:
+                - generic [ref=e836]: Page SS PAGE 49
+                - generic [ref=e837]: Part -
+              - button "Open page" [ref=e838] [cursor=pointer]
+          - listitem [ref=e839]:
+            - generic [ref=e841]: P.SS PAGE 49
+            - generic [ref=e842]:
+              - paragraph [ref=e843]: EXCAVATING, TRENCHING AND BACKFILLING
+              - paragraph [ref=e844]: SMMCD / Part -
+            - paragraph [ref=e845]:
+              - mark [ref=e846]: Admin
+              - text: istrator's representative.
+            - generic [ref=e847]:
+              - generic "Result metadata" [ref=e848]:
+                - generic [ref=e849]: Page SS PAGE 49
+                - generic [ref=e850]: Part -
+              - button "Open page" [ref=e851] [cursor=pointer]
+          - listitem [ref=e852]:
+            - generic [ref=e854]: P.SS PAGE 52
+            - generic [ref=e855]:
+              - paragraph [ref=e856]: ROADWAY EXCAVATION, EMBANKMENT AND COMPACTION
+              - paragraph [ref=e857]: SMMCD / Part -
+            - paragraph [ref=e858]:
+              - mark [ref=e859]: Admin
+              - text: istrator.
+            - generic [ref=e860]:
+              - generic "Result metadata" [ref=e861]:
+                - generic [ref=e862]: Page SS PAGE 52
+                - generic [ref=e863]: Part -
+              - button "Open page" [ref=e864] [cursor=pointer]
+          - listitem [ref=e865]:
+            - generic [ref=e867]: P.SS PAGE 53
+            - generic [ref=e868]:
+              - paragraph [ref=e869]: ROADWAY EXCAVATION, EMBANKMENT AND COMPACTION
+              - paragraph [ref=e870]: SMMCD / Part -
+            - paragraph [ref=e871]:
+              - mark [ref=e872]: Admin
+              - text: istrator's determination of soft areas,
+            - generic [ref=e873]:
+              - generic "Result metadata" [ref=e874]:
+                - generic [ref=e875]: Page SS PAGE 53
+                - generic [ref=e876]: Part -
+              - button "Open page" [ref=e877] [cursor=pointer]
+          - listitem [ref=e878]:
+            - generic [ref=e880]: P.SS PAGE 56
+            - generic [ref=e881]:
+              - paragraph [ref=e882]: COLD MILLING
+              - paragraph [ref=e883]: SMMCD / Part -
+            - paragraph [ref=e884]:
+              - mark [ref=e885]: Admin
+              - text: istrator, the milled material shall be
+            - generic [ref=e886]:
+              - generic "Result metadata" [ref=e887]:
+                - generic [ref=e888]: Page SS PAGE 56
+                - generic [ref=e889]: Part -
+              - button "Open page" [ref=e890] [cursor=pointer]
+          - listitem [ref=e891]:
+            - generic [ref=e893]: P.SS PAGE 56
+            - generic [ref=e894]:
+              - paragraph [ref=e895]: COLD MILLING
+              - paragraph [ref=e896]: SMMCD / Part -
+            - paragraph [ref=e897]:
+              - mark [ref=e898]: Admin
+              - text: istrator
+            - generic [ref=e899]:
+              - generic "Result metadata" [ref=e900]:
+                - generic [ref=e901]: Page SS PAGE 56
+                - generic [ref=e902]: Part -
+              - button "Open page" [ref=e903] [cursor=pointer]
+          - listitem [ref=e904]:
+            - generic [ref=e906]: P.SS PAGE 56
+            - generic [ref=e907]:
+              - paragraph [ref=e908]: COLD MILLING
+              - paragraph [ref=e909]: SMMCD / Part -
+            - paragraph [ref=e910]:
+              - mark [ref=e911]: Admin
+              - text: istrator,
+            - generic [ref=e912]:
+              - generic "Result metadata" [ref=e913]:
+                - generic [ref=e914]: Page SS PAGE 56
+                - generic [ref=e915]: Part -
+              - button "Open page" [ref=e916] [cursor=pointer]
+          - listitem [ref=e917]:
+            - generic [ref=e919]: P.SS PAGE 58
+            - generic [ref=e920]:
+              - paragraph [ref=e921]: GRANULAR BASE
+              - paragraph [ref=e922]: SMMCD / Part -
+            - paragraph [ref=e923]:
+              - mark [ref=e924]: Admin
+              - text: istrator prior to any paving work.
+            - generic [ref=e925]:
+              - generic "Result metadata" [ref=e926]:
+                - generic [ref=e927]: Page SS PAGE 58
+                - generic [ref=e928]: Part -
+              - button "Open page" [ref=e929] [cursor=pointer]
+          - listitem [ref=e930]:
+            - generic [ref=e932]: P.SS PAGE 60
+            - generic [ref=e933]:
+              - paragraph [ref=e934]: HOT-MIX ASPHALT CONCRETE PAVING
+              - paragraph [ref=e935]: SMMCD / Part -
+            - paragraph [ref=e936]:
+              - text: direction of the Contract
+              - mark [ref=e937]: Admin
+              - text: istrator.
+            - generic [ref=e938]:
+              - generic "Result metadata" [ref=e939]:
+                - generic [ref=e940]: Page SS PAGE 60
+                - generic [ref=e941]: Part -
+              - button "Open page" [ref=e942] [cursor=pointer]
+          - listitem [ref=e943]:
+            - generic [ref=e945]: P.SS PAGE 60
+            - generic [ref=e946]:
+              - paragraph [ref=e947]: HOT-MIX ASPHALT CONCRETE PAVING
+              - paragraph [ref=e948]: SMMCD / Part -
+            - paragraph [ref=e949]:
+              - text: satisfaction of the Contract
+              - mark [ref=e950]: Admin
+              - text: istrator.
+            - generic [ref=e951]:
+              - generic "Result metadata" [ref=e952]:
+                - generic [ref=e953]: Page SS PAGE 60
+                - generic [ref=e954]: Part -
+              - button "Open page" [ref=e955] [cursor=pointer]
+          - listitem [ref=e956]:
+            - generic [ref=e958]: P.SS PAGE 63
+            - generic [ref=e959]:
+              - paragraph [ref=e960]: SUPERPAVE HOT-MIX ASPHALT CONCRETE PAVING
+              - paragraph [ref=e961]: SMMCD / Part -
+            - paragraph [ref=e962]:
+              - text: direction of the Contract
+              - mark [ref=e963]: Admin
+              - text: istrator.
+            - generic [ref=e964]:
+              - generic "Result metadata" [ref=e965]:
+                - generic [ref=e966]: Page SS PAGE 63
+                - generic [ref=e967]: Part -
+              - button "Open page" [ref=e968] [cursor=pointer]
+          - listitem [ref=e969]:
+            - generic [ref=e971]: P.SS PAGE 64
+            - generic [ref=e972]:
+              - paragraph [ref=e973]: SUPERPAVE HOT-MIX ASPHALT CONCRETE PAVING
+              - paragraph [ref=e974]: SMMCD / Part -
+            - paragraph [ref=e975]:
+              - mark [ref=e976]: Admin
+              - text: istrator.
+            - generic [ref=e977]:
+              - generic "Result metadata" [ref=e978]:
+                - generic [ref=e979]: Page SS PAGE 64
+                - generic [ref=e980]: Part -
+              - button "Open page" [ref=e981] [cursor=pointer]
+          - listitem [ref=e982]:
+            - generic [ref=e984]: P.SS PAGE 65
+            - generic [ref=e985]:
+              - paragraph [ref=e986]: SUPERPAVE HOT-MIX ASPHALT CONCRETE PAVING
+              - paragraph [ref=e987]: SMMCD / Part -
+            - paragraph [ref=e988]:
+              - text: Plan to the Contract
+              - mark [ref=e989]: Admin
+              - text: istrator at
+            - generic [ref=e990]:
+              - generic "Result metadata" [ref=e991]:
+                - generic [ref=e992]: Page SS PAGE 65
+                - generic [ref=e993]: Part -
+              - button "Open page" [ref=e994] [cursor=pointer]
+          - listitem [ref=e995]:
+            - generic [ref=e997]: P.SS PAGE 73
+            - generic [ref=e998]:
+              - paragraph [ref=e999]: PLANTING OF TREES, SHRUBS AND GROUND COVERS
+              - paragraph [ref=e1000]: SMMCD / Part -
+            - paragraph [ref=e1001]:
+              - mark [ref=e1002]: Admin
+              - text: istrator.
+            - generic [ref=e1003]:
+              - generic "Result metadata" [ref=e1004]:
+                - generic [ref=e1005]: Page SS PAGE 73
+                - generic [ref=e1006]: Part -
+              - button "Open page" [ref=e1007] [cursor=pointer]
+          - listitem [ref=e1008]:
+            - generic [ref=e1010]: P.SS PAGE 75
+            - generic [ref=e1011]:
+              - paragraph [ref=e1012]: CCTV INSPECTION OF PIPELINES
+              - paragraph [ref=e1013]: SMMCD / Part -
+            - paragraph [ref=e1014]:
+              - mark [ref=e1015]: Admin
+              - text: istrator.
+            - generic [ref=e1016]:
+              - generic "Result metadata" [ref=e1017]:
+                - generic [ref=e1018]: Page SS PAGE 75
+                - generic [ref=e1019]: Part -
+              - button "Open page" [ref=e1020] [cursor=pointer]
+          - listitem [ref=e1021]:
+            - generic [ref=e1023]: P.SS PAGE 75
+            - generic [ref=e1024]:
+              - paragraph [ref=e1025]: CCTV INSPECTION OF PIPELINES
+              - paragraph [ref=e1026]: SMMCD / Part -
+            - paragraph [ref=e1027]:
+              - text: Contract
+              - mark [ref=e1028]: Admin
+              - text: istrator immediately.
+            - generic [ref=e1029]:
+              - generic "Result metadata" [ref=e1030]:
+                - generic [ref=e1031]: Page SS PAGE 75
+                - generic [ref=e1032]: Part -
+              - button "Open page" [ref=e1033] [cursor=pointer]
+          - listitem [ref=e1034]:
+            - generic [ref=e1036]: P.SS PAGE 75
+            - generic [ref=e1037]:
+              - paragraph [ref=e1038]: CCTV INSPECTION OF PIPELINES
+              - paragraph [ref=e1039]: SMMCD / Part -
+            - paragraph [ref=e1040]:
+              - mark [ref=e1041]: Admin
+              - text: istrator to be unacceptably cleaned, or
+            - generic [ref=e1042]:
+              - generic "Result metadata" [ref=e1043]:
+                - generic [ref=e1044]: Page SS PAGE 75
+                - generic [ref=e1045]: Part -
+              - button "Open page" [ref=e1046] [cursor=pointer]
+          - listitem [ref=e1047]:
+            - generic [ref=e1049]: P.SS PAGE 75
+            - generic [ref=e1050]:
+              - paragraph [ref=e1051]: CCTV INSPECTION OF PIPELINES
+              - paragraph [ref=e1052]: SMMCD / Part -
+            - paragraph [ref=e1053]:
+              - text: On a random basis, the Contract
+              - mark [ref=e1054]: Admin
+              - text: istrator
+            - generic [ref=e1055]:
+              - generic "Result metadata" [ref=e1056]:
+                - generic [ref=e1057]: Page SS PAGE 75
+                - generic [ref=e1058]: Part -
+              - button "Open page" [ref=e1059] [cursor=pointer]
+          - listitem [ref=e1060]:
+            - generic [ref=e1062]: P.SS PAGE 76
+            - generic [ref=e1063]:
+              - paragraph [ref=e1064]: SEWER CLEANING
+              - paragraph [ref=e1065]: SMMCD / Part -
+            - paragraph [ref=e1066]:
+              - text: Contract
+              - mark [ref=e1067]: Admin
+              - text: istrator, and as verified by pre
+            - generic [ref=e1068]:
+              - generic "Result metadata" [ref=e1069]:
+                - generic [ref=e1070]: Page SS PAGE 76
+                - generic [ref=e1071]: Part -
+              - button "Open page" [ref=e1072] [cursor=pointer]
+          - listitem [ref=e1073]:
+            - generic [ref=e1075]: P.SS PAGE 76
+            - generic [ref=e1076]:
+              - paragraph [ref=e1077]: SEWER CLEANING
+              - paragraph [ref=e1078]: SMMCD / Part -
+            - paragraph [ref=e1079]:
+              - mark [ref=e1080]: Admin
+              - text: istrator’s
+            - generic [ref=e1081]:
+              - generic "Result metadata" [ref=e1082]:
+                - generic [ref=e1083]: Page SS PAGE 76
+                - generic [ref=e1084]: Part -
+              - button "Open page" [ref=e1085] [cursor=pointer]
+          - listitem [ref=e1086]:
+            - generic [ref=e1088]: P.SS PAGE 80
+            - generic [ref=e1089]:
+              - paragraph [ref=e1090]: WATERWORKS
+              - paragraph [ref=e1091]: SMMCD / Part -
+            - paragraph [ref=e1092]:
+              - text: test coupons to Contract
+              - mark [ref=e1093]: Admin
+              - text: istrator.
+            - generic [ref=e1094]:
+              - generic "Result metadata" [ref=e1095]:
+                - generic [ref=e1096]: Page SS PAGE 80
+                - generic [ref=e1097]: Part -
+              - button "Open page" [ref=e1098] [cursor=pointer]
+          - listitem [ref=e1099]:
+            - generic [ref=e1101]: P.SS PAGE 82
+            - generic [ref=e1102]:
+              - paragraph [ref=e1103]: WATERWORKS
+              - paragraph [ref=e1104]: SMMCD / Part -
+            - paragraph [ref=e1105]:
+              - text: arrangements with Contract
+              - mark [ref=e1106]: Admin
+              - text: istrator to
+            - generic [ref=e1107]:
+              - generic "Result metadata" [ref=e1108]:
+                - generic [ref=e1109]: Page SS PAGE 82
+                - generic [ref=e1110]: Part -
+              - button "Open page" [ref=e1111] [cursor=pointer]
+          - listitem [ref=e1112]:
+            - generic [ref=e1114]: P.SS PAGE 86
+            - generic [ref=e1115]:
+              - paragraph [ref=e1116]: SANITARY SEWERS
+              - paragraph [ref=e1117]: SMMCD / Part -
+            - paragraph [ref=e1118]:
+              - text: Contract
+              - mark [ref=e1119]: Admin
+              - text: istrator at least five (5)
+            - generic [ref=e1120]:
+              - generic "Result metadata" [ref=e1121]:
+                - generic [ref=e1122]: Page SS PAGE 86
+                - generic [ref=e1123]: Part -
+              - button "Open page" [ref=e1124] [cursor=pointer]
+          - listitem [ref=e1125]:
+            - generic [ref=e1127]: P.SS PAGE 87
+            - generic [ref=e1128]:
+              - paragraph [ref=e1129]: SANITARY SEWERS
+              - paragraph [ref=e1130]: SMMCD / Part -
+            - paragraph [ref=e1131]:
+              - mark [ref=e1132]: Admin
+              - text: istrator may request 400mm long
+            - generic [ref=e1133]:
+              - generic "Result metadata" [ref=e1134]:
+                - generic [ref=e1135]: Page SS PAGE 87
+                - generic [ref=e1136]: Part -
+              - button "Open page" [ref=e1137] [cursor=pointer]
+          - listitem [ref=e1138]:
+            - generic [ref=e1140]: P.SS PAGE 90
+            - generic [ref=e1141]:
+              - paragraph [ref=e1142]: SANITARY SEWERS
+              - paragraph [ref=e1143]: SMMCD / Part -
+            - paragraph [ref=e1144]:
+              - text: reports to the Contract
+              - mark [ref=e1145]: Admin
+              - text: istrator, who
+            - generic [ref=e1146]:
+              - generic "Result metadata" [ref=e1147]:
+                - generic [ref=e1148]: Page SS PAGE 90
+                - generic [ref=e1149]: Part -
+              - button "Open page" [ref=e1150] [cursor=pointer]
+          - listitem [ref=e1151]:
+            - generic [ref=e1153]: P.SS PAGE 95
+            - generic [ref=e1154]:
+              - paragraph [ref=e1155]: STORM SEWERS
+              - paragraph [ref=e1156]: SMMCD / Part -
+            - paragraph [ref=e1157]:
+              - mark [ref=e1158]: Admin
+              - text: istrator.
+            - generic [ref=e1159]:
+              - generic "Result metadata" [ref=e1160]:
+                - generic [ref=e1161]: Page SS PAGE 95
+                - generic [ref=e1162]: Part -
+              - button "Open page" [ref=e1163] [cursor=pointer]
+          - listitem [ref=e1164]:
+            - generic [ref=e1166]: P.SS PAGE 96
+            - generic [ref=e1167]:
+              - paragraph [ref=e1168]: STORM SEWERS
+              - paragraph [ref=e1169]: SMMCD / Part -
+            - paragraph [ref=e1170]:
+              - text: reports to the Contract
+              - mark [ref=e1171]: Admin
+              - text: istrator, who
+            - generic [ref=e1172]:
+              - generic "Result metadata" [ref=e1173]:
+                - generic [ref=e1174]: Page SS PAGE 96
+                - generic [ref=e1175]: Part -
+              - button "Open page" [ref=e1176] [cursor=pointer]
+          - listitem [ref=e1177]:
+            - generic [ref=e1179]: P.SS PAGE 100
+            - generic [ref=e1180]:
+              - paragraph [ref=e1181]: MANHOLES AND CATCH BASINS
+              - paragraph [ref=e1182]: SMMCD / Part -
+            - paragraph [ref=e1183]:
+              - mark [ref=e1184]: Admin
+              - text: istrator.
+            - generic [ref=e1185]:
+              - generic "Result metadata" [ref=e1186]:
+                - generic [ref=e1187]: Page SS PAGE 100
+                - generic [ref=e1188]: Part -
+              - button "Open page" [ref=e1189] [cursor=pointer]
+          - listitem [ref=e1190]:
+            - generic [ref=e1192]: P.SS PAGE 102
+            - generic [ref=e1193]:
+              - paragraph [ref=e1194]: MANHOLES AND CATCH BASINS
+              - paragraph [ref=e1195]: SMMCD / Part -
+            - paragraph [ref=e1196]:
+              - mark [ref=e1197]: Admin
+              - text: istrator reserves the right to request t...
+            - generic [ref=e1198]:
+              - generic "Result metadata" [ref=e1199]:
+                - generic [ref=e1200]: Page SS PAGE 102
+                - generic [ref=e1201]: Part -
+              - button "Open page" [ref=e1202] [cursor=pointer]
+          - listitem [ref=e1203]:
+            - generic [ref=e1205]: P.SS PAGE 103
+            - generic [ref=e1206]:
+              - paragraph [ref=e1207]: TRAFFIC SIGNALS
+              - paragraph [ref=e1208]: SMMCD / Part -
+            - paragraph [ref=e1209]:
+              - mark [ref=e1210]: Admin
+              - text: istrator
+            - generic [ref=e1211]:
+              - generic "Result metadata" [ref=e1212]:
+                - generic [ref=e1213]: Page SS PAGE 103
+                - generic [ref=e1214]: Part -
+              - button "Open page" [ref=e1215] [cursor=pointer]
+      - generic [ref=e33]:
+        - generic [ref=e34]:
+          - generic [ref=e35]:
+            - generic [ref=e36]: Source viewer
+            - heading "SMMCD" [level=2] [ref=e37]
+            - paragraph [ref=e38]: 88 matches available in this document
+          - generic [ref=e39]:
+            - generic [ref=e40]: Status
+            - generic [ref=e41]: Found 88 results in SMMCD.
+        - generic [ref=e42]:
+          - generic [ref=e43]:
+            - button "Prev" [ref=e44] [cursor=pointer]
+            - generic [ref=e45]:
+              - generic [ref=e46]: Page
+              - spinbutton "Page number" [ref=e1216]: "5"
+              - generic [ref=e48]: / 231
+            - button "Next" [ref=e49] [cursor=pointer]
+          - generic [ref=e51]:
+            - generic [ref=e52]: Zoom
+            - button "-" [ref=e53] [cursor=pointer]
+            - generic [ref=e54]: 100%
+            - button "+" [ref=e55] [cursor=pointer]
+            - button "Reset" [ref=e56] [cursor=pointer]
+          - generic [ref=e58]:
+            - button "Open PDF" [ref=e59] [cursor=pointer]
+            - button "Download" [ref=e60] [cursor=pointer]
+        - button "Open match on page 5" [ref=e1217] [cursor=pointer]
+        - generic [ref=e1218]: "Active evidence: SGC PAGE 1, item 41"
+    - complementary [ref=e65]:
+      - button "Ask MMCD Agent" [ref=e66] [cursor=pointer]
+      - generic:
+        - generic:
+          - generic:
+            - generic:
+              - generic: Chat 4
+              - generic:
+                - img
+          - generic:
+            - button:
+              - img
+            - button:
+              - img
+        - generic:
+          - generic:
+            - paragraph: Cited assistant
+            - heading [level=3]: Ask for answers, then inspect the source.
+            - paragraph: Ask for summaries, obligations, testing procedures, or source locations. Every answer can route you back to the exact PDF page.
+            - generic:
+              - button: What are the key contractor obligations in SGC?
+              - button: Where is the approved materials list for roadway lighting?
+              - button: Summarize start-up, testing and commissioning requirements.
+              - button: What sections cover sanitary sewers and related requirements?
+              - button: Find the requirements for pre-testing and commissioning.
+        - generic:
+          - textbox:
+            - /placeholder: Ask about specifications, requirements, procedures, or cited source pages...
+          - generic:
+            - paragraph: Answers are AI-generated and should be verified against the cited source.
+            - button [disabled]: Send
+  - alert [ref=e67]
