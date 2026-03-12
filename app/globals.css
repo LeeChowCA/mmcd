@@ -3049,6 +3049,20 @@ body::after {
   .viewerPane {
     height: auto;
   }
+
+  .resultsPane {
+    grid-template-rows: auto minmax(0, 1fr);
+    height: min(42vh, 32rem);
+    max-height: min(42vh, 32rem);
+    min-height: 18rem;
+    overflow: hidden;
+  }
+
+  .resultsList {
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
 }
 
 @media (max-width: 900px) {
@@ -3874,5 +3888,111 @@ body {
 
   .contentGrid {
     grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 760px) {
+  .topSearchStrip {
+    padding: 0.78rem;
+    gap: 0.68rem;
+  }
+
+  .topSearchIntro {
+    gap: 0.24rem;
+  }
+
+  .topSearchBrand {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr);
+    align-items: start;
+    gap: 0.7rem;
+    flex-wrap: nowrap;
+  }
+
+  .topSearchBrandMark {
+    width: 42px;
+    height: 42px;
+    padding: 6px;
+    border-radius: 12px;
+  }
+
+  .topSearchBrandCopy {
+    flex: 1 1 auto;
+    width: auto;
+    height: auto;
+    max-width: none;
+    min-width: 0;
+  }
+
+  .topSearchEyebrow {
+    margin-bottom: 0.1rem;
+    font-size: 0.68rem;
+    letter-spacing: 0.16em;
+  }
+
+  .topSearchBrandCopy h1 {
+    font-size: clamp(1.05rem, 4.8vw, 1.55rem);
+    line-height: 1.05;
+    max-width: none;
+  }
+
+  .topSearchBrandCopy p {
+    margin-top: 0.14rem;
+    font-size: 0.82rem;
+    line-height: 1.3;
+    max-width: none;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
+
+  .searchForm {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    padding: 0.56rem;
+    gap: 0.56rem;
+    margin-top: 0;
+  }
+
+  .keywordInput {
+    grid-column: 1 / -1;
+    width: 100%;
+    height: 2.85rem;
+  }
+
+  .scopeSelect {
+    grid-column: 1 / 2;
+    min-width: 0;
+  }
+
+  .scopeSelectTrigger {
+    min-height: 2.85rem;
+    padding-inline: 0.72rem;
+  }
+
+  .scopeSelectLabel {
+    font-size: 0.76rem;
+  }
+
+  .scopeSelectValue {
+    font-size: 0.88rem;
+    min-width: 0;
+  }
+
+  .modeSwitch {
+    grid-column: 2 / 3;
+    min-width: 0;
+  }
+
+  .modeSwitch button {
+    min-width: 0;
+    flex: 1 1 0;
+    padding: 0.7rem 0.45rem;
+    font-size: 0.94rem;
+  }
+
+  .searchButton {
+    grid-column: 1 / -1;
+    height: 2.95rem;
   }
 }
