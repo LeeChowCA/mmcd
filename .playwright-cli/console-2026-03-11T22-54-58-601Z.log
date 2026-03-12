@@ -1,7 +1,0 @@
-[     303ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/favicon.ico:0
-[     673ms] [WARNING] Warning: TT: undefined function: 32 @ http://localhost:3000/pdf.worker.min.mjs:24
-[     753ms] [WARNING] Warning: TT: undefined function: 32 @ http://localhost:3000/pdf.worker.min.mjs:24
-[  311434ms] [WARNING] Warning: TT: undefined function: 32 @ http://localhost:3000/pdf.worker.min.mjs:24
-[  311530ms] [WARNING] Warning: TT: undefined function: 32 @ http://localhost:3000/pdf.worker.min.mjs:24
-[  706557ms] [WARNING] Warning: TT: undefined function: 32 @ http://localhost:3000/pdf.worker.min.mjs:24
-[  706654ms] [WARNING] Warning: TT: undefined function: 32 @ http://localhost:3000/pdf.worker.min.mjs:24
