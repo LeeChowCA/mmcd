@@ -2,9 +2,6 @@ import { useRef, type KeyboardEvent, type RefObject } from "react";
 import type { SearchHit } from "./types";
 
 type PdfSearchViewerPaneProps = {
-  activeSourceLabel: string;
-  searchHitsCount: number;
-  searchMessage: string | null;
   currentPage: number;
   pageCount: number;
   onPreviousPage: () => void;
@@ -32,9 +29,6 @@ type PdfSearchViewerPaneProps = {
 };
 
 export function PdfSearchViewerPane({
-  activeSourceLabel,
-  searchHitsCount,
-  searchMessage,
   currentPage,
   pageCount,
   onPreviousPage,
@@ -97,21 +91,6 @@ export function PdfSearchViewerPane({
 
   return (
     <section className="viewerPane">
-      <div className="paneHeader viewerHeader">
-        <div className="viewerHeading">
-          <span className="paneEyebrow">Source viewer</span>
-          <h2>{activeSourceLabel}</h2>
-          <p>
-            {searchHitsCount} {searchHitsCount === 1 ? "match" : "matches"} available in this
-            document
-          </p>
-        </div>
-        <div className="viewerStatusCard">
-          <span className="viewerStatusLabel">Status</span>
-          <div className="viewerStatus">{searchMessage ?? "Ready to inspect cited pages."}</div>
-        </div>
-      </div>
-
       <div className="viewerToolbar">
         <div className="viewerToolbarGroup">
           <button type="button" onClick={onPreviousPage} disabled={currentPage <= 1}>

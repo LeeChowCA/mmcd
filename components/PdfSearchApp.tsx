@@ -443,7 +443,6 @@ export function PdfSearchApp() {
 
   const [searchHits, setSearchHits] = useState<SearchHit[]>([]);
   const [activeHitId, setActiveHitId] = useState<string | null>(null);
-  const [searchMessage, setSearchMessage] = useState<string | null>(null);
   const [searchingFuzzy, setSearchingFuzzy] = useState(false);
   const [printedPageLabels, setPrintedPageLabels] = useState<Map<number, string>>(new Map());
   const [sectionTitlesByPage, setSectionTitlesByPage] = useState<Map<number, string>>(new Map());
@@ -505,17 +504,6 @@ export function PdfSearchApp() {
       viewerActiveHit ? printedPageLabels.get(viewerActiveHit.pageNumber) ?? null : null,
     [printedPageLabels, viewerActiveHit],
   );
-  const viewerSearchMessage = useMemo(() => {
-    if (!citationFocus) {
-      return searchMessage;
-    }
-
-    const label = citationFocus.label ?? citationFocus.sourceFile ?? activeSource?.label ?? "document";
-    if (typeof citationFocus.page === "number") {
-      return `Viewing citation in ${label}, page ${citationFocus.page}.`;
-    }
-    return `Viewing citation in ${label}.`;
-  }, [activeSource?.label, citationFocus, searchMessage]);
 
   useLayoutEffect(() => {
     function resetHorizontalScroll() {
@@ -597,7 +585,6 @@ export function PdfSearchApp() {
         setPageIndex(new Map());
         setSearchHits([]);
         setActiveHitId(null);
-        setSearchMessage(null);
         setPrintedPageLabels(new Map());
         setSectionTitlesByPage(new Map());
 
@@ -614,7 +601,6 @@ export function PdfSearchApp() {
       setPageIndex(new Map());
       setSearchHits([]);
       setActiveHitId(null);
-      setSearchMessage(null);
       setPrintedPageLabels(new Map());
       setSectionTitlesByPage(new Map());
       setZoomPercent(100);
@@ -828,7 +814,6 @@ export function PdfSearchApp() {
     if (!trimmedQuery) {
       setSearchHits([]);
       setActiveHitId(null);
-      setSearchMessage("Enter a keyword to search.");
       return;
     }
 
@@ -836,7 +821,6 @@ export function PdfSearchApp() {
       if (!activeSource) {
         setSearchHits([]);
         setActiveHitId(null);
-        setSearchMessage("Choose a source before searching.");
         return;
       }
 
@@ -915,18 +899,13 @@ export function PdfSearchApp() {
         if (enrichedHits.length > 0) {
           setCurrentPage(enrichedHits[0].pageNumber);
           setActiveHitId(enrichedHits[0].id);
-          setSearchMessage(
-            `Found ${enrichedHits.length} fuzzy matches at ${NATURAL_SEARCH_MIN_PCT}%+ similarity.`,
-          );
         } else {
           setActiveHitId(null);
-          setSearchMessage(`No fuzzy matches found at ${NATURAL_SEARCH_MIN_PCT}%+ similarity.`);
         }
         window.requestAnimationFrame(resetHorizontalOffset);
       } catch {
         setSearchHits([]);
         setActiveHitId(null);
-        setSearchMessage("Fuzzy search is unavailable right now.");
         window.requestAnimationFrame(resetHorizontalOffset);
       } finally {
         setSearchingFuzzy(false);
@@ -940,11 +919,9 @@ export function PdfSearchApp() {
     if (hits.length > 0) {
       setCurrentPage(hits[0].pageNumber);
       setActiveHitId(hits[0].id);
-      setSearchMessage(`Found ${hits.length} results in ${activeSource?.label ?? "source"}.`);
       window.requestAnimationFrame(resetHorizontalOffset);
     } else {
       setActiveHitId(null);
-      setSearchMessage("No exact matches found in this source.");
       window.requestAnimationFrame(resetHorizontalOffset);
     }
   }
@@ -1086,9 +1063,6 @@ export function PdfSearchApp() {
         />
 
         <PdfSearchViewerPane
-          activeSourceLabel={activeSource?.label ?? "No source selected"}
-          searchHitsCount={searchHits.length}
-          searchMessage={viewerSearchMessage}
           currentPage={currentPage}
           pageCount={pageCount}
           onPreviousPage={previousPage}
